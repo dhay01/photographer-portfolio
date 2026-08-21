@@ -75,7 +75,7 @@ useHeroParallax(frame)
     </div>
 
     <div class="scroll-cue">
-      Scroll
+      {{ $t('common.scroll') }}
       <span class="scroll-cue__line" />
     </div>
   </div>

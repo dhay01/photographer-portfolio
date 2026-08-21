@@ -4,15 +4,19 @@ import gsap from 'gsap'
 import SiteNav from '../components/SiteNav.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
-import { works, workCategories } from '../data/works'
+import { getCategories, getPage, getPhotos } from '../lib/api'
+import { useContent, useContentFor } from '../composables/useContent'
 
 const grid = ref(null)
-const cat = ref('All')
+// null is the "All" pill — the API filters server-side when a slug is set.
+const cat = ref(null)
 const lightboxPos = ref(null)
 
-const visible = computed(() =>
-  cat.value === 'All' ? works : works.filter((w) => w.cat === cat.value),
-)
+const { data: page } = useContent(getPage.bind(null, 'work'))
+const { data: categories } = useContent(() => getCategories('work'), { initial: [] })
+const { data: photos, pending, error, reload } = useContentFor(cat, getPhotos, { initial: [] })
+
+const visible = computed(() => photos.value ?? [])
 
 const openAt = (i) => (lightboxPos.value = i)
 const closeLightbox = () => (lightboxPos.value = null)
@@ -21,8 +25,8 @@ const step = (delta) => {
   lightboxPos.value = (lightboxPos.value + delta + n) % n
 }
 
-// Re-stagger the surviving tiles whenever the filter changes.
-watch(cat, async () => {
+// Re-stagger the surviving tiles whenever a new set arrives.
+watch(photos, async () => {
   closeLightbox()
   await nextTick()
   const tiles = grid.value?.querySelectorAll('[data-tile]')
@@ -41,23 +45,34 @@ watch(cat, async () => {
 
     <header class="work__head">
       <div>
-        <span class="eyebrow">Portfolio</span>
-        <h1 class="work__title">the work</h1>
+        <span class="eyebrow">{{ page?.eyebrow }}</span>
+        <h1 class="work__title">{{ page?.title }}</h1>
       </div>
 
       <div class="filters">
         <button
-          v-for="c in workCategories"
-          :key="c"
-          :class="['filter', { 'filter--on': c === cat }]"
-          @click="cat = c"
+          :class="['filter', { 'filter--on': cat === null }]"
+          @click="cat = null"
         >
-          {{ c }}
+          {{ $t('work.all') }}
+        </button>
+        <button
+          v-for="c in categories"
+          :key="c.slug"
+          :class="['filter', { 'filter--on': c.slug === cat }]"
+          @click="cat = c.slug"
+        >
+          {{ c.name }}
         </button>
       </div>
     </header>
 
-    <main ref="grid" class="masonry">
+    <p v-if="error" class="work__state mono">
+      {{ error }}
+      <button type="button" class="work__retry" @click="reload(cat)">{{ $t('common.retry') }}</button>
+    </p>
+
+    <main v-else ref="grid" :class="['masonry', { 'masonry--pending': pending }]">
       <div
         v-for="(item, i) in visible"
         :key="item.slug"
@@ -71,13 +86,17 @@ watch(cat, async () => {
         @keydown.space.prevent="openAt(i)"
       >
         <div data-tile-img class="tile__img" :style="{ aspectRatio: item.ratio }">
-          <ImageSlot :src="item.src" :alt="item.title" :placeholder="`${item.cat} · ${item.title}`" />
+          <ImageSlot
+            :src="item.images?.preview"
+            :alt="item.alt"
+            :placeholder="`${item.category?.name ?? ''} · ${item.title}`"
+          />
         </div>
         <div class="tile__scrim" />
-        <div v-if="item.zoom" class="tile__zoom mono">&#10530; Zoom</div>
+        <div v-if="item.is_zoomable" class="tile__zoom mono">{{ $t('work.zoom') }}</div>
         <div class="tile__meta">
           <div class="tile__name">{{ item.title }}</div>
-          <div class="tile__cat mono">{{ item.cat }}</div>
+          <div class="tile__cat mono">{{ item.category?.name }}</div>
         </div>
       </div>
     </main>
@@ -93,6 +112,26 @@ watch(cat, async () => {
 </template>
 
 <style scoped>
+.work__state {
+  padding: 40px var(--gutter);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 240, 234, 0.5);
+}
+
+.work__retry {
+  margin-inline-start: 12px;
+  text-decoration: underline;
+  color: inherit;
+}
+
+/* Keep the grid in place while a filter request is in flight. */
+.masonry--pending {
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+
 .work {
   position: relative;
   min-height: 100vh;

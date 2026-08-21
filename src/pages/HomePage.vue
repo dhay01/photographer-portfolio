@@ -1,44 +1,49 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import SiteNav from '../components/SiteNav.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 import HeroCarousel from '../components/HeroCarousel.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import { photos } from '../data/photos'
-import { courses } from '../data/courses'
+import { getCategories, getHeroSlides, getPage, getWorkshops } from '../lib/api'
+import { useContent } from '../composables/useContent'
+import { useSite } from '../composables/useSite'
 
 const root = ref(null)
 useSiteMotion(root)
 
-const heroSlides = [
-  { src: photos.ranges, alt: 'Misty mountain ranges at dawn' },
-  { src: photos.stars, alt: 'Night sky over Halgurd' },
-  { src: photos.valley, alt: 'The white valley at Sakran' },
-  { src: photos.assignment, alt: 'On assignment in Kurdistan' },
-  { src: photos.devotion, alt: 'Documentary frame from Karbala' },
-]
+const { site } = useSite()
+const { data: page } = useContent(getPage.bind(null, 'home'))
+const { data: slides } = useContent(getHeroSlides, { initial: [] })
+const { data: workshops } = useContent(getWorkshops, { initial: [] })
+const { data: galleries } = useContent(() => getCategories('work'), { initial: [] })
 
-const clients = ['VOGUE', '◆ atelier', 'MONO®', 'hasselblad', 'NORD/', '◎ lumen', 'KINFOLK']
+// Named blocks from the dashboard; `section('shop')` is undefined-safe so a
+// section that has not been filled in yet simply renders empty.
+const section = (key) => page.value?.sections?.[key] ?? {}
+const items = (key) => section(key).items ?? []
 
-const stats = [
-  { value: '12', label: 'Years behind\nthe lens' },
-  { value: '52K', label: 'Instagram\ncommunity' },
-  { value: '5', label: 'Solo\nexhibitions' },
-]
+// The home page shows the first four categories that opted into the showcase.
+const featuredGalleries = computed(() =>
+  (galleries.value ?? []).filter((c) => c.grid_span).slice(0, 4),
+)
 
-const galleries = [
-  { n: '01', title: 'Architecture', count: '48 frames', src: photos.arch, span: 7, ratio: '16/11' },
-  { n: '02', title: 'Landscape', count: '62 frames', src: photos.ranges, span: 5, ratio: null },
-  { n: '03', title: 'Portrait', count: '34 frames', src: photos.herder, span: 5, ratio: '4/5' },
-  { n: '04', title: 'Commercial', count: '29 frames', src: photos.valley, span: 7, ratio: null },
-]
+const heroSlides = computed(() =>
+  (slides.value ?? []).map((slide) => ({ src: slide.images?.preview, alt: slide.alt })),
+)
 
-const products = [
-  { title: 'Studio Logo Crew', sub: 'Heavyweight cotton', placeholder: 'sweatshirt · logo' },
-  { title: 'Everyday Hoodie', sub: 'Brushed fleece', placeholder: 'hoodie · logo' },
-  { title: '“Through My Lens” Crew', sub: 'Minimal text print', placeholder: 'sweatshirt · simple print' },
-]
+const emphasise = (text) => {
+  if (!text) return ''
+
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+}
+
+const metaLines = computed(() => (section('meta').body ?? '').split('\n').filter(Boolean))
 
 const notified = ref(false)
 const email = ref('')
@@ -59,22 +64,26 @@ const onNotify = () => {
         <HeroCarousel :slides="heroSlides">
           <div class="hero__headline">
             <h1 data-reveal>
-              ghaith<br />salih<span class="hero__mark">&reg;</span>
+              {{ site?.name }}<span class="hero__mark">&reg;</span>
             </h1>
-            <p data-reveal class="hero__tagline">through my lens</p>
+            <p data-reveal class="hero__tagline">{{ site?.tagline }}</p>
           </div>
 
           <div data-reveal class="hero__micro">
-            Based in Baghdad, Iraq<br />Available worldwide<br />Est. 2013
+            <template v-for="(line, i) in metaLines" :key="i">
+              <template v-if="i">
+                <br />
+              </template>
+              {{ line }}
+            </template>
           </div>
 
           <div data-reveal class="hero__intro">
             <p>
-              <span class="hero__dash">&mdash;&nbsp;</span>Landscape, panorama &amp; gigapixel
-              photography &mdash; wide, patient frames of a world most people pass without looking.
+              <span class="hero__dash">&mdash;&nbsp;</span><span v-html="emphasise(page?.intro)" />
             </p>
             <RouterLink to="/work" class="btn btn--sm">
-              View the work <span class="arrow">&rarr;</span>
+              {{ $t('home.viewWork') }} <span class="arrow">&rarr;</span>
             </RouterLink>
           </div>
         </HeroCarousel>
@@ -85,14 +94,16 @@ const onNotify = () => {
     <section class="clients">
       <div class="clients__marquee-wrap">
         <div class="clients__marquee">
-          <span v-for="(client, i) in [...clients, ...clients]" :key="i">{{ client }}</span>
+          <span v-for="(client, i) in [...items('clients'), ...items('clients')]" :key="i">
+            {{ client.label }}
+          </span>
         </div>
       </div>
       <div class="clients__rating">
         <div class="mono clients__stars">
           <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>&nbsp;&nbsp;4.9/5
         </div>
-        <div class="mono clients__note">Trusted by 100+ clients</div>
+        <div class="mono clients__note">{{ section('clients').note }}</div>
       </div>
     </section>
 
@@ -100,33 +111,30 @@ const onNotify = () => {
     <section id="about" class="about">
       <div class="about__grid">
         <div data-fade class="about__portrait">
-          <ImageSlot :src="photos.portraitStudy" alt="Portrait of Ghaith Salih" fit="cover" />
+          <ImageSlot
+            :src="site?.author?.images?.preview"
+            :alt="site?.author?.name"
+            fit="cover"
+          />
           <div data-bracket class="bracket bracket--sm bracket--tl" />
           <div data-bracket class="bracket bracket--sm bracket--br" />
         </div>
 
         <div data-fade>
-          <span class="eyebrow">(01) &mdash; About</span>
-          <h2 class="about__lead">
-            I don&rsquo;t just take photos &mdash; I capture the
-            <em>vast, quiet stillness</em> of a landscape in the one moment its light will never
-            repeat.
-          </h2>
-          <p class="body-copy about__copy">
-            For more than twelve years I&rsquo;ve worked across open landscapes and wide horizons
-            &mdash; building panoramas and gigapixel frames stitched from hundreds of exposures.
-            Based in Baghdad, shooting worldwide, and teaching the craft along the way.
-          </p>
+          <span class="eyebrow">{{ section('about').eyebrow }}</span>
+          <!-- Heading allows <em> for the accent style; authored in the dashboard. -->
+          <h2 class="about__lead" v-html="section('about').heading" />
+          <p class="body-copy about__copy">{{ section('about').body }}</p>
 
           <div class="stats">
-            <div v-for="stat in stats" :key="stat.value">
+            <div v-for="stat in items('stats')" :key="stat.value">
               <div class="stats__value">{{ stat.value }}</div>
               <div class="stats__label mono">{{ stat.label }}</div>
             </div>
           </div>
 
           <RouterLink to="/about" class="btn about__cta">
-            Read the full story <span class="arrow">&rarr;</span>
+            {{ $t('home.readStory') }} <span class="arrow">&rarr;</span>
           </RouterLink>
         </div>
       </div>
@@ -138,41 +146,43 @@ const onNotify = () => {
         <div class="section-head">
           <div>
             <span class="eyebrow">(02) &mdash; Selected work</span>
-            <h2 class="display">Featured galleries</h2>
+            <h2 class="display">{{ section('work').heading }}</h2>
           </div>
           <RouterLink to="/work" class="link-mono">
-            All galleries <span class="arrow">&rarr;</span>
+            {{ $t('home.allGalleries') }} <span class="arrow">&rarr;</span>
           </RouterLink>
         </div>
 
         <div class="galleries__grid">
           <RouterLink
-            v-for="gallery in galleries"
-            :key="gallery.n"
+            v-for="(gallery, i) in featuredGalleries"
+            :key="gallery.slug"
             to="/work"
             data-tile
             data-fade
             class="tile"
             :style="{
-              gridColumn: `span ${gallery.span}`,
-              aspectRatio: gallery.ratio ?? undefined,
+              gridColumn: `span ${gallery.grid_span}`,
+              aspectRatio: gallery.grid_ratio ?? undefined,
             }"
           >
             <div data-tile-img class="tile__img">
               <ImageSlot
-                :src="gallery.src"
-                :alt="gallery.title"
-                :placeholder="gallery.title"
+                :src="gallery.images?.preview"
+                :alt="gallery.name"
+                :placeholder="gallery.name"
                 fit="cover"
               />
             </div>
             <div class="tile__scrim" />
             <div class="tile__meta">
               <div>
-                <span class="tile__n mono">{{ gallery.n }}</span>
-                <div class="tile__title">{{ gallery.title }}</div>
+                <span class="tile__n mono">{{ String(i + 1).padStart(2, '0') }}</span>
+                <div class="tile__title">{{ gallery.name }}</div>
               </div>
-              <span class="tile__count mono">{{ gallery.count }}</span>
+              <span class="tile__count mono">
+                {{ $t('home.frames', { count: gallery.photos_count ?? 0 }) }}
+              </span>
             </div>
           </RouterLink>
         </div>
@@ -184,18 +194,15 @@ const onNotify = () => {
       <div class="shell">
         <div class="section-head">
           <div data-fade>
-            <span class="eyebrow">(03) &mdash; Learn</span>
-            <h2 class="display">Courses &amp; workshops</h2>
+            <span class="eyebrow">{{ section('learn').eyebrow }}</span>
+            <h2 class="display">{{ section('learn').heading }}</h2>
           </div>
-          <p data-fade class="lede courses__note">
-            Seven years of teaching &mdash; hundreds trained on the ground, thousands online. Once a
-            year we run a month-long camp on shooting, teamwork and winning clients.
-          </p>
+          <p data-fade class="lede courses__note">{{ section('learn').body }}</p>
         </div>
 
         <div data-fade class="course-list">
           <RouterLink
-            v-for="(course, i) in courses"
+            v-for="(course, i) in workshops"
             :key="course.slug"
             :to="`/courses/${course.slug}`"
             data-course
@@ -204,17 +211,19 @@ const onNotify = () => {
             <span class="course-row__n mono">{{ String(i + 1).padStart(2, '0') }}</span>
             <div>
               <div class="course-row__title">{{ course.title }}</div>
-              <div class="course-row__sub mono">{{ course.format }}</div>
+              <div class="course-row__sub mono">{{ course.mode }}</div>
             </div>
-            <span class="course-row__where mono">{{ course.where }}</span>
-            <span class="course-row__status mono">{{ course.status }}</span>
+            <span class="course-row__where mono">{{ course.location }}</span>
+            <span class="course-row__status mono">
+              {{ course.is_full ? $t('courses.completed') : $t('courses.seatsShort', { count: course.seats_left }) }}
+            </span>
             <span class="course-row__price">{{ course.price }}</span>
             <span class="course-row__arrow">&rarr;</span>
           </RouterLink>
         </div>
 
         <RouterLink to="/courses" data-fade class="btn courses__cta">
-          See full schedule <span class="arrow">&rarr;</span>
+          {{ $t('home.seeSchedule') }} <span class="arrow">&rarr;</span>
         </RouterLink>
       </div>
     </section>
@@ -224,39 +233,38 @@ const onNotify = () => {
       <div class="shell">
         <div class="section-head">
           <div data-fade>
-            <span class="eyebrow">(04) &mdash; Shop</span>
+            <span class="eyebrow">{{ section('shop').eyebrow }}</span>
             <h2 class="display shop__title">
-              wear the work
-              <span class="shop__badge mono"><span class="shop__dot" />Coming soon</span>
+              {{ section('shop').heading }}
+              <span class="shop__badge mono">
+                <span class="shop__dot" />{{ section('shop').note }}
+              </span>
             </h2>
           </div>
-          <p data-fade class="lede shop__note">
-            A small first drop &mdash; clean, heavyweight sweatshirts with the studio logo and a few
-            minimal prints. Landing this winter.
-          </p>
+          <p data-fade class="lede shop__note">{{ section('shop').body }}</p>
         </div>
 
         <div class="shop__grid">
-          <div v-for="product in products" :key="product.title" data-fade data-prod class="product">
+          <div v-for="product in items('shop')" :key="product.label" data-fade data-prod class="product">
             <div class="product__media">
               <div class="product__img">
-                <ImageSlot :placeholder="product.placeholder" />
+                <ImageSlot :placeholder="product.note" />
               </div>
               <div class="product__scrim" />
-              <div class="product__flag mono">Soon</div>
+              <div class="product__flag mono">{{ $t('home.soon') }}</div>
             </div>
             <div class="product__foot">
               <div>
-                <div class="product__title">{{ product.title }}</div>
-                <div class="product__sub mono">{{ product.sub }}</div>
+                <div class="product__title">{{ product.label }}</div>
+                <div class="product__sub mono">{{ product.value }}</div>
               </div>
-              <span class="product__soon mono">Soon</span>
+              <span class="product__soon mono">{{ $t('home.soon') }}</span>
             </div>
           </div>
         </div>
 
         <div data-fade class="notify">
-          <div class="notify__copy">Be first to know when the drop goes live.</div>
+          <div class="notify__copy">{{ $t('home.notifyPrompt') }}</div>
           <form class="notify__form" @submit.prevent="onNotify">
             <input
               v-model="email"
@@ -266,9 +274,9 @@ const onNotify = () => {
               placeholder="your@email.com"
               aria-label="Email address"
             />
-            <button type="submit" class="btn btn--solid">Notify me</button>
+            <button type="submit" class="btn btn--solid">{{ $t('home.notify') }}</button>
             <span class="notify__msg mono" :style="{ opacity: notified ? 1 : 0 }">
-              Thanks &mdash; we&rsquo;ll email you at launch.
+              {{ $t('home.notifyThanks') }}
             </span>
           </form>
         </div>

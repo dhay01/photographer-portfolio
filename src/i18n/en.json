@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "home": "Home",
+    "work": "Work",
+    "about": "About",
+    "courses": "Courses",
+    "journal": "Journal",
+    "contact": "Contact",
+    "menu": "Menu",
+    "close": "Close"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong loading this page.",
+    "retry": "Try again",
+    "scroll": "Scroll",
+    "backToTop": "Back to top ↑",
+    "rights": "© {year} {name} — all rights reserved",
+    "imagePlaceholder": "Image placeholder"
+  },
+  "home": {
+    "viewWork": "View the work",
+    "allGalleries": "All galleries",
+    "readStory": "Read the full story",
+    "seeSchedule": "See full schedule",
+    "soon": "Soon",
+    "notifyPrompt": "Be first to know when the drop goes live.",
+    "notify": "Notify me",
+    "notifyThanks": "Thanks — we’ll email you at launch.",
+    "frames": "{count} frames"
+  },
+  "work": {
+    "all": "All",
+    "zoom": "⤢ Zoom",
+    "location": "Location",
+    "gear": "Gear",
+    "enterZoom": "⤢ Enter deep-zoom",
+    "gigapixel": "⤢ Gigapixel deep-zoom",
+    "dragToExplore": "drag to explore",
+    "zoomNote": "Preview only — production mounts an OpenSeadragon tile pyramid for true gigapixel pan & zoom."
+  },
+  "blog": {
+    "featured": "Featured",
+    "readStory": "Read the story",
+    "allArticles": "All articles",
+    "subscribe": "Subscribe",
+    "subscribeThanks": "Thanks — you’re on the list.",
+    "back": "← The journal",
+    "unwritten": "This story is still being written — check back soon.",
+    "writtenBy": "Written by",
+    "follow": "Follow →",
+    "keepReading": "Keep reading",
+    "readTime": "{minutes} min read"
+  },
+  "courses": {
+    "back": "← All courses",
+    "all": "All courses",
+    "workshopDay": "Workshop day",
+    "selected": "Selected",
+    "dates": "Dates",
+    "location": "Location",
+    "level": "Level",
+    "duration": "Duration",
+    "seats": "Seats",
+    "seatsLeft": "Seats left",
+    "seatsLeftCount": "{count} seats left",
+    "seatsShort": "{count} left",
+    "perSeat": "per seat",
+    "fullDetails": "Full details →",
+    "reserve": "Reserve a seat",
+    "reserved": "Reserved ✓",
+    "selectDate": "Select a highlighted date to see workshop details.",
+    "upcoming": "All upcoming",
+    "past": "Past workshops",
+    "archive": "Archive",
+    "completed": "Completed",
+    "overview": "Overview",
+    "outcomes": "What you’ll learn",
+    "syllabus": "Syllabus",
+    "included": "Included",
+    "prerequisites": "Prerequisites",
+    "instructor": "Your instructor",
+    "faq": "FAQ",
+    "seatReserved": "Seat reserved",
+    "checkInbox": "Check your inbox for confirmation and an invoice.",
+    "noPayment": "No payment now — we’ll email your invoice.",
+    "home": "Home →"
+  },
+  "reserve": {
+    "title": "Reserve a seat",
+    "perSeat": "per seat",
+    "seats": "Seats",
+    "noPayment": "No payment now — we’ll email you an invoice and joining details.",
+    "waitlistedBefore": "is full, so we’ve added you to the waitlist. We’ll email you the moment a seat frees up.",
+    "confirmedBefore": "is held. Check your inbox for confirmation and joining details.",
+    "reference": "Reference {reference}",
+    "done": "Done"
+  },
+  "footer": {
+    "eyebrow": "(05) — Get in touch",
+    "headline": "let’s create",
+    "headlineAccent": "together",
+    "email": "Email",
+    "phone": "Phone",
+    "studio": "Studio"
+  },
+  "about": {
+    "journey": "(01) — The journey",
+    "philosophy": "(02) — Philosophy",
+    "approach": "(03) — Approach to the craft",
+    "gear": "(04) — Gear & studio"
+  }
+}

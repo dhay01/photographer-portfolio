@@ -1,19 +1,24 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSite } from '../composables/useSite'
 
 defineProps({
   // Home overlays the nav on the hero; inner pages sit it above content.
   absolute: { type: Boolean, default: false },
 })
 
+const { site } = useSite()
+
+// Routes are structural, so they stay here; only the visible labels are
+// translated, and the wordmark comes from the dashboard.
 const links = [
-  { label: 'Home', to: '/' },
-  { label: 'About', to: '/about' },
-  { label: 'Work', to: '/work' },
-  { label: 'Courses', to: '/courses' },
-  { label: 'Blog', to: '/blog' },
-  { label: 'Contact', to: '/#contact' },
+  { key: 'home', to: '/' },
+  { key: 'about', to: '/about' },
+  { key: 'work', to: '/work' },
+  { key: 'courses', to: '/courses' },
+  { key: 'journal', to: '/blog' },
+  { key: 'contact', to: '/#contact' },
 ]
 
 const route = useRoute()
@@ -25,12 +30,12 @@ watch(() => route.fullPath, () => (open.value = false))
 <template>
   <nav :class="['site-nav', { 'site-nav--absolute': absolute }]">
     <RouterLink to="/" data-reveal class="wordmark">
-      ghaith salih<span class="wordmark__mark">&reg;</span>
+      {{ site?.name }}<span class="wordmark__mark">&reg;</span>
     </RouterLink>
 
     <div data-reveal class="nav-links">
       <RouterLink v-for="link in links" :key="link.to" :to="link.to" class="nav-link">
-        {{ link.label }}
+        {{ $t(`nav.${link.key}`) }}
       </RouterLink>
     </div>
 
@@ -38,7 +43,7 @@ watch(() => route.fullPath, () => (open.value = false))
       data-reveal
       class="nav-toggle"
       :aria-expanded="open"
-      aria-label="Menu"
+      :aria-label="$t('nav.menu')"
       @click="open = !open"
     >
       <span :class="{ 'is-open-top': open }" />
@@ -47,7 +52,7 @@ watch(() => route.fullPath, () => (open.value = false))
 
     <div v-if="open" class="nav-drawer">
       <RouterLink v-for="link in links" :key="link.to" :to="link.to" class="nav-drawer__link">
-        {{ link.label }}
+        {{ $t(`nav.${link.key}`) }}
       </RouterLink>
     </div>
   </nav>

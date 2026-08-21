@@ -1,36 +1,54 @@
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import SiteNav from '../components/SiteNav.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import {
-  workshops,
-  pastWorkshops,
-  monthName,
-  formatDates,
-  shortDate,
-} from '../data/courses'
+import { getPage, getWorkshops } from '../lib/api'
+import { useContent } from '../composables/useContent'
+import { dateParts, monthName, price, shortDate, workshopDates } from '../lib/format'
 
 const root = ref(null)
 useSiteMotion(root)
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const year = ref(2026)
-const month = ref(2)
-const selectedSlug = ref(workshops[0].slug)
+const { data: page } = useContent(getPage.bind(null, 'courses'))
+const { data: allWorkshops } = useContent(getWorkshops, { initial: [] })
+
+// One request returns the whole schedule; the archive is simply everything the
+// API already flagged as past.
+const workshops = computed(() => (allWorkshops.value ?? []).filter((w) => !w.is_past))
+const pastWorkshops = computed(() => (allWorkshops.value ?? []).filter((w) => w.is_past))
+
+const today = new Date()
+const year = ref(today.getFullYear())
+const month = ref(today.getMonth())
+const selectedSlug = ref(null)
 const reserved = reactive({})
 
 const reserveOpen = ref(false)
 
-const selected = computed(() => workshops.find((w) => w.slug === selectedSlug.value) ?? null)
-const monthLabel = computed(() => `${monthName(month.value)} ${year.value}`)
+const selected = computed(
+  () => workshops.value.find((w) => w.slug === selectedSlug.value) ?? workshops.value[0] ?? null,
+)
+const monthLabel = computed(() => `${monthName(month.value, year.value)} ${year.value}`)
+
+// Jump the calendar to the first upcoming workshop once the schedule arrives.
+watch(workshops, (list) => {
+  if (selectedSlug.value || !list.length) return
+
+  selectedSlug.value = list[0].slug
+  const { year: y, month: m } = dateParts(list[0].starts_on)
+  year.value = y
+  month.value = m
+})
 
 const cells = computed(() => {
   const byDay = {}
-  workshops.forEach((w) => {
-    if (w.year === year.value && w.month === month.value) byDay[w.day] = w
+  workshops.value.forEach((w) => {
+    const { year: y, month: m, day } = dateParts(w.starts_on)
+    if (y === year.value && m === month.value) byDay[day] = w
   })
 
   const firstWeekday = new Date(year.value, month.value, 1).getDay()
@@ -65,11 +83,13 @@ const shiftMonth = (delta) => {
 }
 
 const select = (slug) => {
-  const w = workshops.find((x) => x.slug === slug)
+  const w = workshops.value.find((x) => x.slug === slug)
   if (!w) return
+
   selectedSlug.value = slug
-  year.value = w.year
-  month.value = w.month
+  const { year: y, month: m } = dateParts(w.starts_on)
+  year.value = y
+  month.value = m
 }
 
 const openReserve = () => (reserveOpen.value = true)
@@ -82,13 +102,10 @@ const onReserved = () => (reserved[selectedSlug.value] = true)
     <SiteNav />
 
     <header class="courses__head">
-      <span class="eyebrow">Learn</span>
+      <span class="eyebrow">{{ page?.eyebrow }}</span>
       <div class="courses__head-row">
-        <h1 class="courses__title">courses &amp;<br />workshops</h1>
-        <p class="lede courses__intro">
-          Seven years of teaching &mdash; hundreds on the ground, thousands online. Pick a date below
-          to see details and reserve your seat.
-        </p>
+        <h1 class="courses__title" style="white-space: pre-line">{{ page?.title }}</h1>
+        <p class="lede courses__intro">{{ page?.intro }}</p>
       </div>
     </header>
 
@@ -137,16 +154,28 @@ const onReserved = () => (reserved[selectedSlug.value] = true)
           <h2 class="detail__title">{{ selected.title }}</h2>
 
           <dl class="detail__facts">
-            <div><dt class="mono">Dates</dt><dd>{{ formatDates(selected) }}</dd></div>
-            <div><dt class="mono">Location</dt><dd>{{ selected.loc }}</dd></div>
-            <div><dt class="mono">Level</dt><dd>{{ selected.level }}</dd></div>
-            <div><dt class="mono">Seats</dt><dd>{{ selected.seats }}</dd></div>
+            <div>
+              <dt class="mono">{{ $t('courses.dates') }}</dt>
+              <dd>{{ workshopDates(selected) }}</dd>
+            </div>
+            <div>
+              <dt class="mono">{{ $t('courses.location') }}</dt>
+              <dd>{{ selected.location }}</dd>
+            </div>
+            <div>
+              <dt class="mono">{{ $t('courses.level') }}</dt>
+              <dd>{{ selected.level }}</dd>
+            </div>
+            <div>
+              <dt class="mono">{{ $t('courses.seats') }}</dt>
+              <dd>{{ $t('courses.seatsLeftCount', { count: selected.seats_left }) }}</dd>
+            </div>
           </dl>
 
           <div class="detail__foot">
             <div class="detail__price-col">
               <div>
-                <span class="detail__price">{{ selected.price }}</span>
+                <span class="detail__price">{{ price(selected) }}</span>
                 <span class="mono detail__per">per seat</span>
               </div>
               <RouterLink :to="`/courses/${selected.slug}`" class="mono detail__more">
@@ -185,9 +214,11 @@ const onReserved = () => (reserved[selectedSlug.value] = true)
           <span class="row__title">{{ w.title }}</span>
           <span class="mono row__mode">{{ w.mode }}</span>
         </span>
-        <span class="mono row__loc">{{ w.loc }}</span>
-        <span class="mono row__seats">{{ reserved[w.slug] ? 'Reserved' : w.seatsShort }}</span>
-        <span class="row__price">{{ w.price }}</span>
+        <span class="mono row__loc">{{ w.location }}</span>
+        <span class="mono row__seats">
+          {{ reserved[w.slug] ? $t('courses.reserved') : $t('courses.seatsShort', { count: w.seats_left }) }}
+        </span>
+        <span class="row__price">{{ price(w) }}</span>
         <span class="row__arrow">&rarr;</span>
       </button>
     </section>
@@ -195,22 +226,22 @@ const onReserved = () => (reserved[selectedSlug.value] = true)
     <!-- PAST -->
     <section class="past">
       <div class="rule-head rule-head--split">
-        <span class="mono rule-head__label">Past workshops</span>
+        <span class="mono rule-head__label">{{ $t('courses.past') }}</span>
         <span class="mono rule-head__aside">Archive</span>
       </div>
 
       <div class="past__grid">
-        <article v-for="w in pastWorkshops" :key="w.id" data-fade class="past-card">
+        <article v-for="w in pastWorkshops" :key="w.slug" data-fade class="past-card">
           <div class="past-card__media">
             <div class="past-card__img">
-              <ImageSlot :src="w.src" :alt="w.title" :placeholder="w.title" />
+              <ImageSlot :src="w.images?.thumb" :alt="w.title" :placeholder="w.title" />
             </div>
             <div class="mono past-card__flag">Completed</div>
           </div>
           <div class="mono past-card__meta">
-            <span class="past-card__date">{{ w.date }}</span>
+            <span class="past-card__date">{{ shortDate(w) }}</span>
             <span class="past-card__dot" />
-            <span>{{ w.loc }}</span>
+            <span>{{ w.location }}</span>
           </div>
           <h3 class="past-card__title">{{ w.title }}</h3>
           <div class="mono past-card__attendees">{{ w.attendees }}</div>

@@ -1,15 +1,25 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import SiteNav from '../components/SiteNav.vue'
 import MiniFooter from '../components/MiniFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import { featuredPost, listedPosts } from '../data/posts'
-import { site } from '../data/site'
+import { getPage, getPosts } from '../lib/api'
+import { useContent } from '../composables/useContent'
+import { useSite } from '../composables/useSite'
+import { monthYear } from '../lib/format'
 
 const root = ref(null)
 useSiteMotion(root)
+
+const { site } = useSite()
+const { data: page } = useContent(getPage.bind(null, 'blog'))
+const { data: posts } = useContent(getPosts, { initial: [] })
+
+// The API sorts featured first; the index gives that one the hero slot.
+const featuredPost = computed(() => posts.value?.find((p) => p.is_featured) ?? null)
+const listedPosts = computed(() => (posts.value ?? []).filter((p) => !p.is_featured))
 
 const email = ref('')
 const subscribed = ref(false)
@@ -19,11 +29,15 @@ const onSubscribe = () => {
   email.value = ''
 }
 
-const footerLinks = [
-  { label: 'Instagram', href: site.socials[0].href },
-  { label: 'Contact', to: '/#contact' },
-  { label: 'Home →', to: '/' },
-]
+const footerLinks = computed(() => {
+  const instagram = site.value?.socials?.[0]
+
+  return [
+    ...(instagram ? [{ label: instagram.label, href: instagram.href }] : []),
+    { key: 'contact', to: '/#contact' },
+    { key: 'home', to: '/' },
+  ]
+})
 </script>
 
 <template>
@@ -31,42 +45,39 @@ const footerLinks = [
     <SiteNav />
 
     <header class="blog__head">
-      <span class="eyebrow">Journal</span>
+      <span class="eyebrow">{{ page?.eyebrow }}</span>
       <div class="blog__head-row">
-        <h1 class="blog__title">notes from<br />the field</h1>
-        <p class="lede blog__intro">
-          Behind-the-scenes stories, technique breakdowns, and gear notes from the road &mdash;
-          written between shoots.
-        </p>
+        <h1 class="blog__title" style="white-space: pre-line">{{ page?.title }}</h1>
+        <p class="lede blog__intro">{{ page?.intro }}</p>
       </div>
     </header>
 
     <!-- FEATURED -->
-    <section class="featured-wrap">
+    <section v-if="featuredPost" class="featured-wrap">
       <RouterLink :to="`/blog/${featuredPost.slug}`" data-tile data-fade class="featured">
         <div class="featured__media">
           <div data-tile-img class="featured__img">
             <ImageSlot
-              :src="featuredPost.src"
+              :src="featuredPost.images?.preview"
               :alt="featuredPost.title"
               placeholder="featured cover"
             />
           </div>
-          <div class="mono featured__flag">Featured</div>
+          <div class="mono featured__flag">{{ $t('blog.featured') }}</div>
         </div>
 
         <div>
           <div class="mono featured__meta">
-            <span class="featured__cat">{{ featuredPost.cat }}</span>
+            <span class="featured__cat">{{ featuredPost.category?.name }}</span>
             <span class="featured__dot" />
-            <span>{{ featuredPost.date }}</span>
+            <span>{{ monthYear(featuredPost.published_on) }}</span>
             <span class="featured__dot" />
-            <span>{{ featuredPost.read }}</span>
+            <span>{{ $t('blog.readTime', { minutes: featuredPost.read_minutes }) }}</span>
           </div>
           <h2 class="featured__title">{{ featuredPost.title }}</h2>
           <p class="featured__excerpt">{{ featuredPost.excerpt }}</p>
           <span class="mono featured__cta">
-            Read the story <span class="featured__arrow">&rarr;</span>
+            {{ $t('blog.readStory') }} <span class="featured__arrow">&rarr;</span>
           </span>
         </div>
       </RouterLink>
@@ -75,8 +86,8 @@ const footerLinks = [
     <!-- ALL ARTICLES -->
     <section class="articles">
       <div class="articles__head">
-        <span class="mono articles__label">All articles</span>
-        <span class="mono articles__count">{{ String(listedPosts.length + 1).padStart(2, '0') }}</span>
+        <span class="mono articles__label">{{ $t('blog.allArticles') }}</span>
+        <span class="mono articles__count">{{ String(posts?.length ?? 0).padStart(2, '0') }}</span>
       </div>
 
       <div class="articles__grid">
@@ -88,7 +99,7 @@ const footerLinks = [
     <section class="subscribe">
       <div class="subscribe__inner">
         <h2 class="subscribe__title">
-          New stories, roughly once a month.<br />No noise.
+          {{ page?.sections?.subscribe?.heading }}<br />{{ page?.sections?.subscribe?.body }}
         </h2>
         <form class="subscribe__form" @submit.prevent="onSubscribe">
           <input
@@ -99,9 +110,9 @@ const footerLinks = [
             placeholder="your@email.com"
             aria-label="Email address"
           />
-          <button type="submit" class="btn btn--solid subscribe__btn">Subscribe</button>
+          <button type="submit" class="btn btn--solid subscribe__btn">{{ $t('blog.subscribe') }}</button>
           <span class="mono subscribe__msg" :style="{ opacity: subscribed ? 1 : 0 }">
-            Thanks &mdash; you&rsquo;re on the list.
+            {{ $t('blog.subscribeThanks') }}
           </span>
         </form>
       </div>

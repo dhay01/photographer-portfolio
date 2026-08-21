@@ -4,57 +4,41 @@ import SiteNav from '../components/SiteNav.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import { photos } from '../data/photos'
+import { getAbout, getPage } from '../lib/api'
+import { useContent } from '../composables/useContent'
 
 const root = ref(null)
 useSiteMotion(root)
 
-const disciplines = ['Landscape', 'Panorama', 'Gigapixel']
+const { data: page } = useContent(getPage.bind(null, 'about'))
+const { data: about, pending, error } = useContent(getAbout)
 
-const timeline = [
-  { year: '2013', what: 'First steps into professional landscape photography.' },
-  { year: '2018', what: 'Began teaching workshops on the ground.' },
-  { year: '2020', what: 'Trained thousands of photographers online.' },
-  { year: '2026', what: 'Annual month-long training camp in Baghdad.' },
-]
+// The intro is the only field that needs inline emphasis. Escaping first keeps
+// dashboard input from injecting markup beyond the <strong> we add ourselves.
+const emphasise = (text) => {
+  if (!text) return ''
 
-const approach = [
-  {
-    n: '01',
-    title: 'Observe',
-    body: 'Before the camera comes up, I watch. Every subject has a rhythm — the way they move, pause, and forget I’m there. I wait for that.',
-  },
-  {
-    n: '02',
-    title: 'Wait',
-    body: 'Light is the one collaborator I can’t rush. I’d rather lose the shot than fake the moment. The best frames arrive when you stop chasing them.',
-  },
-  {
-    n: '03',
-    title: 'Honor',
-    body: 'In edit, I protect what was real. Grain over gloss, texture over perfection. The goal is never to improve the moment — only to keep it.',
-  },
-]
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 
-const gear = [
-  { label: 'Cameras', value: 'Sigma BF (Sony E-mount)' },
-  { label: 'Lenses', value: 'Sigma 14mm f/1.8 · 70-200mm f/2.8 · 105mm Macro' },
-  { label: 'Lighting', value: 'Natural light · golden hour, mostly' },
-  { label: 'Formats', value: 'Panorama · Gigapixel · Landscape' },
-  { label: 'Studio', value: 'Baghdad, Iraq — shooting worldwide' },
-]
+  return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+}
 </script>
 
 <template>
   <div ref="root" class="about">
     <SiteNav absolute />
 
+    <p v-if="error" class="about__state mono">{{ error }}</p>
+
     <!-- HERO -->
     <section class="hero">
       <div class="shell">
-        <span data-reveal class="eyebrow">(00) &mdash; About</span>
+        <span data-reveal class="eyebrow">{{ page?.eyebrow }}</span>
         <h1 data-reveal class="hero__title">
-          the person<br />behind the lens<span class="hero__mark">&reg;</span>
+          {{ about?.hero_title }}<span class="hero__mark">&reg;</span>
         </h1>
       </div>
 
@@ -62,8 +46,8 @@ const gear = [
         <div data-reveal class="hero__media">
           <div class="hero__media-img">
             <ImageSlot
-              :src="photos.assignment"
-              alt="Ghaith Salih at work"
+              :src="about?.hero_image?.preview"
+              :alt="about?.hero_title"
               placeholder="photographer at work · 16:10"
             />
           </div>
@@ -74,12 +58,10 @@ const gear = [
         </div>
 
         <div data-reveal>
-          <p class="hero__intro">
-            I&rsquo;m <strong>Ghaith Salih</strong> &mdash; a landscape, panorama &amp; gigapixel
-            photographer based in Baghdad, with 12+ years chasing wide, honest light.
-          </p>
+          <!-- Authored in the dashboard; **bold** is the only markup honoured. -->
+          <p class="hero__intro" v-html="emphasise(about?.hero_intro)" />
           <div class="chips">
-            <span v-for="d in disciplines" :key="d" class="chip mono">{{ d }}</span>
+            <span v-for="d in about?.disciplines ?? []" :key="d" class="chip mono">{{ d }}</span>
           </div>
         </div>
       </div>
@@ -90,30 +72,16 @@ const gear = [
       <div class="journey__grid">
         <div>
           <div data-fade class="journey__sticky">
-            <span class="eyebrow">(01) &mdash; The journey</span>
-            <h2 class="journey__title">From a borrowed camera to a life in light.</h2>
+            <span class="eyebrow">{{ $t('about.journey') }}</span>
+            <h2 class="journey__title">{{ about?.journey_title }}</h2>
           </div>
         </div>
 
         <div data-fade class="journey__prose">
-          <p>
-            It started with a borrowed camera and a country full of horizon. I studied Film
-            Directing at the College of Fine Arts &mdash; but it was the still frame, not the moving
-            one, that held me.
-          </p>
-          <p>
-            Over twelve years I turned toward the land: wide panoramas and gigapixel frames stitched
-            from hundreds of exposures, each one a patient argument for slowing down. I&rsquo;ve held
-            5 solo exhibitions, shown in many group shows, and collected awards along the way.
-          </p>
-          <p>
-            Teaching came next. For seven years I&rsquo;ve trained hundreds of photographers on the
-            ground and thousands online &mdash; including a Sony workshop on video, held with the
-            Arab Photographers Union. Today more than 52,000 people follow the work on Instagram.
-          </p>
+          <p v-for="(para, i) in about?.journey_paragraphs ?? []" :key="i">{{ para }}</p>
 
           <div class="timeline">
-            <div v-for="entry in timeline" :key="entry.year" class="timeline__row">
+            <div v-for="entry in about?.timeline ?? []" :key="entry.year" class="timeline__row">
               <span class="mono timeline__year">{{ entry.year }}</span>
               <span class="timeline__what">{{ entry.what }}</span>
             </div>
@@ -124,24 +92,17 @@ const gear = [
 
     <!-- PHILOSOPHY -->
     <section class="section section--rule philosophy">
-      <span data-fade class="eyebrow">(02) &mdash; Philosophy</span>
-      <blockquote data-fade class="philosophy__quote">
-        I don&rsquo;t photograph how things look. <span>I photograph</span> what light forgets to
-        say.
-      </blockquote>
-      <p data-fade class="philosophy__note">
-        A photograph should feel like a memory you didn&rsquo;t know you had. I work slow and quiet,
-        keeping the frame honest &mdash; no forced smiles, no over-direction. Just presence,
-        patience, and the right light.
-      </p>
+      <span data-fade class="eyebrow">{{ $t('about.philosophy') }}</span>
+      <blockquote data-fade class="philosophy__quote">{{ about?.philosophy_quote }}</blockquote>
+      <p data-fade class="philosophy__note">{{ about?.philosophy_note }}</p>
     </section>
 
     <!-- APPROACH -->
     <section class="section section--rule">
       <div class="shell">
-        <span data-fade class="eyebrow">(03) &mdash; Approach to the craft</span>
+        <span data-fade class="eyebrow">{{ $t('about.approach') }}</span>
         <div class="approach">
-          <div v-for="step in approach" :key="step.n" data-fade>
+          <div v-for="step in about?.approach ?? []" :key="step.n" data-fade>
             <div class="mono approach__n">{{ step.n }}</div>
             <h3 class="approach__title">{{ step.title }}</h3>
             <p class="approach__body">{{ step.body }}</p>
@@ -154,13 +115,11 @@ const gear = [
     <section class="section section--rule">
       <div class="gear">
         <div data-fade>
-          <span class="eyebrow">(04) &mdash; Gear &amp; studio</span>
-          <h2 class="gear__title">
-            Simple tools, used well. The camera is never the point &mdash; but people always ask.
-          </h2>
+          <span class="eyebrow">{{ $t('about.gear') }}</span>
+          <h2 class="gear__title">{{ about?.gear_title }}</h2>
 
           <dl class="gear__list">
-            <div v-for="item in gear" :key="item.label">
+            <div v-for="item in about?.gear ?? []" :key="item.label">
               <dt class="mono">{{ item.label }}</dt>
               <dd>{{ item.value }}</dd>
             </div>
@@ -169,8 +128,8 @@ const gear = [
 
         <div data-fade class="gear__media">
           <ImageSlot
-            :src="photos.stars"
-            alt="Studio and gear"
+            :src="about?.gear_image?.preview"
+            :alt="about?.gear_title"
             placeholder="studio / gear still life · 4:5"
           />
           <div data-bracket class="bracket bracket--sm bracket--tr" />
@@ -183,6 +142,15 @@ const gear = [
 </template>
 
 <style scoped>
+.about__state {
+  padding: 120px var(--gutter);
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 240, 234, 0.5);
+}
+
 .about {
   position: relative;
   min-height: 100vh;

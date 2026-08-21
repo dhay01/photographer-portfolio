@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "home": "",
+    "work": "",
+    "about": "",
+    "courses": "",
+    "journal": "",
+    "contact": "",
+    "menu": "",
+    "close": ""
+  },
+  "common": {
+    "loading": "",
+    "error": "",
+    "retry": "",
+    "scroll": "",
+    "backToTop": "",
+    "rights": "",
+    "imagePlaceholder": ""
+  },
+  "home": {
+    "viewWork": "",
+    "allGalleries": "",
+    "readStory": "",
+    "seeSchedule": "",
+    "soon": "",
+    "notifyPrompt": "",
+    "notify": "",
+    "notifyThanks": "",
+    "frames": ""
+  },
+  "work": {
+    "all": "",
+    "zoom": "",
+    "location": "",
+    "gear": "",
+    "enterZoom": "",
+    "gigapixel": "",
+    "dragToExplore": "",
+    "zoomNote": ""
+  },
+  "blog": {
+    "featured": "",
+    "readStory": "",
+    "allArticles": "",
+    "subscribe": "",
+    "subscribeThanks": "",
+    "back": "",
+    "unwritten": "",
+    "writtenBy": "",
+    "follow": "",
+    "keepReading": "",
+    "readTime": ""
+  },
+  "courses": {
+    "back": "",
+    "all": "",
+    "workshopDay": "",
+    "selected": "",
+    "dates": "",
+    "location": "",
+    "level": "",
+    "duration": "",
+    "seats": "",
+    "seatsLeft": "",
+    "seatsLeftCount": "",
+    "seatsShort": "",
+    "perSeat": "",
+    "fullDetails": "",
+    "reserve": "",
+    "reserved": "",
+    "selectDate": "",
+    "upcoming": "",
+    "past": "",
+    "archive": "",
+    "completed": "",
+    "overview": "",
+    "outcomes": "",
+    "syllabus": "",
+    "included": "",
+    "prerequisites": "",
+    "instructor": "",
+    "faq": "",
+    "seatReserved": "",
+    "checkInbox": "",
+    "noPayment": "",
+    "home": ""
+  },
+  "reserve": {
+    "title": "",
+    "perSeat": "",
+    "seats": "",
+    "noPayment": "",
+    "waitlistedBefore": "",
+    "confirmedBefore": "",
+    "reference": "",
+    "done": ""
+  },
+  "footer": {
+    "eyebrow": "",
+    "headline": "",
+    "headlineAccent": "",
+    "email": "",
+    "phone": "",
+    "studio": ""
+  },
+  "about": {
+    "journey": "",
+    "philosophy": "",
+    "approach": "",
+    "gear": ""
+  }
+}

@@ -1,5 +1,7 @@
 <script setup>
-import { site } from '../data/site'
+import { useSite } from '../composables/useSite'
+
+const { site } = useSite()
 
 const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 </script>
@@ -7,31 +9,32 @@ const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 <template>
   <footer id="contact" class="site-footer">
     <div class="shell">
-      <span data-fade class="eyebrow">(05) &mdash; Get in touch</span>
+      <span data-fade class="eyebrow">{{ $t('footer.eyebrow') }}</span>
 
-      <a :href="`mailto:${site.email}`" data-fade class="footer-cta">
-        let&rsquo;s create<br />together <span class="footer-cta__arrow">&#8599;</span>
+      <a :href="site ? `mailto:${site.email}` : undefined" data-fade class="footer-cta">
+        {{ $t('footer.headline') }}<br />{{ $t('footer.headlineAccent') }}
+        <span class="footer-cta__arrow">&#8599;</span>
       </a>
 
       <div data-fade class="footer-meta">
         <div class="footer-meta__group">
           <div>
-            <div class="footer-label">Email</div>
-            <a :href="`mailto:${site.email}`" class="footer-value">{{ site.email }}</a>
+            <div class="footer-label">{{ $t('footer.email') }}</div>
+            <a :href="site ? `mailto:${site.email}` : undefined" class="footer-value">{{ site?.email }}</a>
           </div>
           <div>
-            <div class="footer-label">Phone</div>
-            <a :href="`tel:${site.phoneHref}`" class="footer-value">{{ site.phone }}</a>
+            <div class="footer-label">{{ $t('footer.phone') }}</div>
+            <a :href="site ? `tel:${site.phone_href}` : undefined" class="footer-value">{{ site?.phone }}</a>
           </div>
           <div>
-            <div class="footer-label">Studio</div>
-            <span class="footer-value footer-value--static">{{ site.studio }}</span>
+            <div class="footer-label">{{ $t('footer.studio') }}</div>
+            <span class="footer-value footer-value--static">{{ site?.studio }}</span>
           </div>
         </div>
 
         <div class="footer-social">
           <a
-            v-for="social in site.socials"
+            v-for="social in site?.socials ?? []"
             :key="social.label"
             :href="social.href"
             target="_blank"
@@ -43,8 +46,8 @@ const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
       </div>
 
       <div class="footer-base">
-        <span>&copy; {{ site.year }} ghaith salih &mdash; all rights reserved</span>
-        <button type="button" class="footer-top" @click="scrollTop">Back to top &#8593;</button>
+        <span>{{ $t('common.rights', { year: site?.year ?? '', name: site?.name ?? '' }) }}</span>
+        <button type="button" class="footer-top" @click="scrollTop">{{ $t('common.backToTop') }}</button>
       </div>
     </div>
   </footer>

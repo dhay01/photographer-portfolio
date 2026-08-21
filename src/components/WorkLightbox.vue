@@ -49,29 +49,34 @@ onBeforeUnmount(() => {
 
       <div class="lb__stage">
         <div class="lb__frame">
-          <img v-if="current.src" :src="current.src" :alt="current.title" class="lb__img" />
-          <div v-else class="lb__ph mono">Image placeholder</div>
+          <img
+            v-if="current.images"
+            :src="current.images.full"
+            :alt="current.alt"
+            class="lb__img"
+          />
+          <div v-else class="lb__ph mono">{{ $t('common.imagePlaceholder') }}</div>
         </div>
 
         <div class="lb__meta">
           <div>
             <div class="lb__title">{{ current.title }}</div>
-            <div class="lb__cat mono">{{ current.cat }}</div>
+            <div class="lb__cat mono">{{ current.category?.name }}</div>
           </div>
 
           <div class="lb__facts">
             <div>
-              <div class="lb__label mono">Location</div>
-              <div class="lb__value">{{ current.loc }}</div>
+              <div class="lb__label mono">{{ $t('work.location') }}</div>
+              <div class="lb__value">{{ current.location }}</div>
             </div>
             <div>
-              <div class="lb__label mono">Gear</div>
+              <div class="lb__label mono">{{ $t('work.gear') }}</div>
               <div class="lb__value">{{ current.gear }}</div>
             </div>
           </div>
 
-          <button v-if="current.zoom" class="zoom-cta mono" @click="zoomOpen = true">
-            &#10530; Enter deep-zoom
+          <button v-if="current.is_zoomable" class="zoom-cta mono" @click="zoomOpen = true">
+            {{ $t('work.enterZoom') }}
           </button>
         </div>
       </div>
@@ -83,7 +88,7 @@ onBeforeUnmount(() => {
   <div v-if="zoomOpen && current" class="dz">
     <div class="dz__bar">
       <div class="dz__title">
-        <span class="mono dz__kicker">&#10530; Gigapixel deep-zoom</span>
+        <span class="mono dz__kicker">{{ $t('work.gigapixel') }}</span>
         <span class="mono dz__name">{{ current.title }}</span>
       </div>
       <button class="round round--sm" aria-label="Close" @click="zoomOpen = false">&times;</button>
@@ -94,7 +99,7 @@ onBeforeUnmount(() => {
       <div class="dz__vignette" />
       <div class="dz__reticle" />
       <div class="dz__controls mono">
-        <span class="dz__hint">drag to explore</span>
+        <span class="dz__hint">{{ $t('work.dragToExplore') }}</span>
         <span class="dz__sep" />
         <span class="dz__knob">&minus;</span>
         <span class="dz__knob dz__knob--on">+</span>
@@ -102,8 +107,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="dz__foot mono">
-      Preview only &mdash; production mounts an OpenSeadragon tile pyramid for true gigapixel pan
-      &amp; zoom.
+      {{ $t('work.zoomNote') }}
     </div>
   </div>
 </template>

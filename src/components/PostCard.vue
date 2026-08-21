@@ -1,5 +1,6 @@
 <script setup>
 import ImageSlot from './ImageSlot.vue'
+import { monthYear } from '../lib/format'
 
 defineProps({
   post: { type: Object, required: true },
@@ -12,21 +13,25 @@ defineProps({
   <RouterLink :to="`/blog/${post.slug}`" data-tile data-fade class="card">
     <div class="card__media">
       <div data-tile-img class="card__img">
-        <ImageSlot :src="post.src" :alt="post.title" :placeholder="post.cat" />
+        <ImageSlot
+          :src="post.images?.thumb"
+          :alt="post.title"
+          :placeholder="post.category?.name"
+        />
       </div>
     </div>
 
     <div class="mono card__meta">
-      <span class="card__cat">{{ post.cat }}</span>
+      <span class="card__cat">{{ post.category?.name }}</span>
       <span class="card__dot" />
-      <span>{{ post.date }}</span>
+      <span>{{ monthYear(post.published_on) }}</span>
     </div>
 
     <h3 :class="['card__title', { 'card__title--compact': compact }]">{{ post.title }}</h3>
 
     <template v-if="!compact">
       <p class="card__excerpt">{{ post.excerpt }}</p>
-      <div class="mono card__read">{{ post.read }}</div>
+      <div class="mono card__read">{{ $t('blog.readTime', { minutes: post.read_minutes }) }}</div>
     </template>
   </RouterLink>
 </template>

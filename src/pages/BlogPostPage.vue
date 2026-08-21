@@ -6,14 +6,26 @@ import MiniFooter from '../components/MiniFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import { getPost, relatedTo, author } from '../data/posts'
+import { getPost, getPosts } from '../lib/api'
+import { useContent, useContentFor } from '../composables/useContent'
+import { useSite } from '../composables/useSite'
+import { monthYear } from '../lib/format'
 
 const root = ref(null)
 useSiteMotion(root)
 
 const route = useRoute()
-const post = computed(() => getPost(route.params.slug))
-const related = computed(() => relatedTo(post.value))
+const { site } = useSite()
+const author = computed(() => site.value?.author ?? null)
+
+// Re-fetches when the route slug changes, so /blog/a -> /blog/b loads the new post.
+const slug = computed(() => route.params.slug)
+const { data: post, pending, error } = useContentFor(slug, getPost)
+
+const { data: allPosts } = useContent(getPosts, { initial: [] })
+const related = computed(() =>
+  (allPosts.value ?? []).filter((p) => p.slug !== post.value?.slug).slice(0, 3),
+)
 
 // Reading-progress bar.
 const progress = ref(0)
@@ -30,9 +42,9 @@ onMounted(() => {
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
 const footerLinks = [
-  { label: 'The journal', to: '/blog' },
-  { label: 'Contact', to: '/#contact' },
-  { label: 'Home →', to: '/' },
+  { key: 'journal', to: '/blog' },
+  { key: 'contact', to: '/#contact' },
+  { key: 'home', to: '/' },
 ]
 </script>
 
@@ -42,15 +54,20 @@ const footerLinks = [
 
     <SiteNav />
 
+    <p v-if="pending || error" class="post__state mono">
+      {{ error ?? $t('common.loading') }}
+    </p>
+
+    <template v-else-if="post">
     <header class="post__head">
-      <RouterLink to="/blog" class="mono post__back">&larr; The journal</RouterLink>
+      <RouterLink to="/blog" class="mono post__back">{{ $t('blog.back') }}</RouterLink>
 
       <div data-reveal class="mono post__meta">
-        <span class="post__cat">{{ post.cat }}</span>
+        <span class="post__cat">{{ post.category?.name }}</span>
         <span class="post__dot" />
-        <span>{{ post.date }}</span>
+        <span>{{ monthYear(post.published_on) }}</span>
         <span class="post__dot" />
-        <span>{{ post.read }}</span>
+        <span>{{ $t('blog.readTime', { minutes: post.read_minutes }) }}</span>
       </div>
 
       <h1 data-reveal class="post__title">{{ post.title }}</h1>
@@ -58,10 +75,11 @@ const footerLinks = [
 
       <div data-reveal class="byline">
         <span class="byline__avatar">
-          <ImageSlot :src="author.photo" :alt="author.name" />
+          <ImageSlot :src="author?.images?.thumb" :alt="author?.name" />
         </span>
         <div class="mono byline__name">
-          <span>{{ author.name }}</span><span class="byline__loc"> &middot; {{ author.location }}</span>
+          <span>{{ author?.name }}</span>
+          <span class="byline__loc"> &middot; {{ author?.location }}</span>
         </div>
       </div>
     </header>
@@ -69,14 +87,14 @@ const footerLinks = [
     <section class="cover-wrap">
       <div data-reveal class="cover">
         <div class="cover__img">
-          <ImageSlot :src="post.src" :alt="post.title" placeholder="article cover · 16:9" />
+          <ImageSlot :src="post.images?.preview" :alt="post.title" placeholder="article cover · 16:9" />
         </div>
       </div>
     </section>
 
     <!-- BODY -->
     <article class="article">
-      <template v-if="post.body">
+      <template v-if="post.body?.length">
         <template v-for="(block, i) in post.body" :key="i">
           <div v-if="block.type === 'text'" class="prose" data-fade>
             <p v-for="(para, j) in block.paragraphs" :key="j">{{ para }}</p>
@@ -101,10 +119,10 @@ const footerLinks = [
 
       <div v-else class="prose" data-fade>
         <p>{{ post.excerpt }}</p>
-        <p>This story is still being written — check back soon.</p>
+        <p>{{ $t('blog.unwritten') }}</p>
       </div>
 
-      <div v-if="post.tags" data-fade class="tags">
+      <div v-if="post.tags?.length" data-fade class="tags">
         <span v-for="tag in post.tags" :key="tag" class="chip mono">{{ tag }}</span>
       </div>
     </article>
@@ -113,14 +131,14 @@ const footerLinks = [
     <section class="author-wrap">
       <div data-fade class="author">
         <div class="author__photo">
-          <ImageSlot :src="author.photo" :alt="author.name" placeholder="author" />
+          <ImageSlot :src="author?.images?.preview" :alt="author?.name" placeholder="author" />
         </div>
         <div>
-          <div class="mono author__label">Written by</div>
-          <div class="author__name">{{ author.name }}</div>
-          <p class="author__bio">{{ author.bio }}</p>
-          <a :href="author.follow" target="_blank" rel="noopener" class="mono author__follow">
-            Follow &rarr;
+          <div class="mono author__label">{{ $t('blog.writtenBy') }}</div>
+          <div class="author__name">{{ author?.name }}</div>
+          <p class="author__bio">{{ author?.bio }}</p>
+          <a :href="author?.follow" target="_blank" rel="noopener" class="mono author__follow">
+            {{ $t('blog.follow') }}
           </a>
         </div>
       </div>
@@ -129,18 +147,29 @@ const footerLinks = [
     <!-- RELATED -->
     <section class="related">
       <div class="shell">
-        <span class="mono related__label">Keep reading</span>
+        <span class="mono related__label">{{ $t('blog.keepReading') }}</span>
         <div class="related__grid">
           <PostCard v-for="item in related" :key="item.slug" :post="item" compact />
         </div>
       </div>
     </section>
 
+    </template>
+
     <MiniFooter :links="footerLinks" />
   </div>
 </template>
 
 <style scoped>
+.post__state {
+  padding: 120px var(--gutter);
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 240, 234, 0.5);
+}
+
 .post {
   position: relative;
   min-height: 100vh;
