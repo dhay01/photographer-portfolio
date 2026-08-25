@@ -1,6 +1,9 @@
 {
   "name": "photographer-portfolio",
   "private": true,
+  "engines": {
+    "node": ">=22.12"
+  },
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -12,6 +15,7 @@
     "@fontsource/poppins": "^5.3.0",
     "@fontsource/space-mono": "^5.3.0",
     "gsap": "^3.15.0",
+    "openseadragon": "^6.1.0",
     "vue": "^3.5.40",
     "vue-i18n": "^11.4.8",
     "vue-router": "^5.2.0"

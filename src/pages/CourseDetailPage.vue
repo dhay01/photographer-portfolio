@@ -5,22 +5,21 @@ import SiteNav from '../components/SiteNav.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import { workshops, formatDates, monthName } from '../data/courses'
-import { getCourseDetail, instructor } from '../data/courseDetails'
-import { site } from '../data/site'
+import { getWorkshop } from '../lib/api'
+import { useContentFor } from '../composables/useContent'
+import { useSite } from '../composables/useSite'
+import { price, workshopDates } from '../lib/format'
 
 const root = ref(null)
 useSiteMotion(root)
 
 const route = useRoute()
-const course = computed(() => workshops.find((w) => w.slug === route.params.slug) ?? workshops[0])
-const detail = computed(() => getCourseDetail(course.value))
+const { site } = useSite()
+const instructor = computed(() => site.value?.author ?? null)
 
-const shortRange = computed(() => {
-  const c = course.value
-  const mn = monthName(c.month).slice(0, 3)
-  return c.endDay ? `${c.day}–${c.endDay} ${mn} ${c.year}` : `${c.day} ${mn} ${c.year}`
-})
+// Re-fetches when the slug changes, so moving between courses loads the new one.
+const slug = computed(() => route.params.slug)
+const { data: course, pending, error } = useContentFor(slug, getWorkshop)
 
 const openFaq = ref(null)
 const toggleFaq = (i) => (openFaq.value = openFaq.value === i ? null : i)
@@ -33,8 +32,13 @@ const reserveOpen = ref(false)
   <div ref="root" class="cd">
     <SiteNav />
 
+    <p v-if="pending || error" class="cd__state mono">
+      {{ error ? $t('courses.notFound') : $t('common.loading') }}
+    </p>
+
+    <template v-else-if="course">
     <header class="cd__head">
-      <RouterLink to="/courses" class="mono cd__back">&larr; All courses</RouterLink>
+      <RouterLink to="/courses" class="mono cd__back">{{ $t('courses.back') }}</RouterLink>
 
       <div data-reveal class="mono cd__kicker">
         <span class="cd__mode">{{ course.mode }}</span>
@@ -45,17 +49,35 @@ const reserveOpen = ref(false)
       <h1 data-reveal class="cd__title">{{ course.title }}</h1>
 
       <div data-reveal class="cd__facts">
-        <div><div class="mono cd__label">Dates</div><div class="cd__value">{{ formatDates(course) }}</div></div>
-        <div><div class="mono cd__label">Location</div><div class="cd__value">{{ detail.locationLong }}</div></div>
-        <div><div class="mono cd__label">Duration</div><div class="cd__value">{{ detail.duration }}</div></div>
-        <div><div class="mono cd__label">Seats</div><div class="cd__value">{{ detail.seatsDetail }}</div></div>
+        <div>
+          <div class="mono cd__label">{{ $t('courses.dates') }}</div>
+          <div class="cd__value">{{ workshopDates(course) }}</div>
+        </div>
+        <div>
+          <div class="mono cd__label">{{ $t('courses.location') }}</div>
+          <div class="cd__value">{{ course.location }}</div>
+        </div>
+        <div>
+          <div class="mono cd__label">{{ $t('courses.duration') }}</div>
+          <div class="cd__value">{{ course.duration }}</div>
+        </div>
+        <div>
+          <div class="mono cd__label">{{ $t('courses.seats') }}</div>
+          <div class="cd__value">
+            {{ $t('courses.seatsOf', { left: course.seats_left, total: course.seats_total }) }}
+          </div>
+        </div>
       </div>
     </header>
 
     <section class="cd__cover-wrap">
       <div data-reveal class="cd__cover">
         <div class="cd__cover-img">
-          <ImageSlot :src="detail.cover" :alt="course.title" placeholder="course cover · 21:9" />
+          <ImageSlot
+            :src="course.images?.preview"
+            :alt="course.title"
+            placeholder="course cover · 21:9"
+          />
         </div>
         <div class="cd__cover-scrim" />
       </div>
@@ -65,30 +87,30 @@ const reserveOpen = ref(false)
       <div class="cd__grid">
         <div>
           <div data-fade>
-            <span class="eyebrow">Overview</span>
-            <p class="cd__overview">{{ detail.overview }}</p>
+            <span class="eyebrow">{{ $t('courses.overview') }}</span>
+            <p class="cd__overview">{{ course.overview }}</p>
           </div>
 
           <div data-fade class="cd__block">
-            <span class="eyebrow">What you&rsquo;ll learn</span>
+            <span class="eyebrow">{{ $t('courses.outcomes') }}</span>
             <div class="outcomes">
-              <div v-for="(o, i) in detail.outcomes" :key="o" class="outcome">
+              <div v-for="(o, i) in course.outcomes ?? []" :key="o" class="outcome">
                 <span class="mono outcome__n">{{ String(i + 1).padStart(2, '0') }}</span>
                 <span class="outcome__text">{{ o }}</span>
               </div>
             </div>
           </div>
 
-          <div v-if="detail.syllabus.length" data-fade class="cd__block">
-            <span class="eyebrow">Syllabus</span>
+          <div v-if="course.syllabus?.length" data-fade class="cd__block">
+            <span class="eyebrow">{{ $t('courses.syllabus') }}</span>
             <div class="syllabus">
-              <div v-for="day in detail.syllabus" :key="day.day" class="syllabus__day">
+              <div v-for="day in course.syllabus" :key="day.day" class="syllabus__day">
                 <div class="syllabus__head">
                   <span class="mono syllabus__n">{{ day.day }}</span>
                   <span class="syllabus__title">{{ day.title }}</span>
                 </div>
                 <div class="syllabus__slots">
-                  <div v-for="slot in day.slots" :key="slot.time" class="syllabus__slot">
+                  <div v-for="slot in day.slots ?? []" :key="slot.time" class="syllabus__slot">
                     <span class="mono syllabus__time">{{ slot.time }}</span>
                     <span class="syllabus__what">{{ slot.what }}</span>
                   </div>
@@ -99,17 +121,17 @@ const reserveOpen = ref(false)
 
           <div data-fade class="cd__block cd__two-col">
             <div>
-              <span class="eyebrow">Included</span>
+              <span class="eyebrow">{{ $t('courses.included') }}</span>
               <ul class="ticks">
-                <li v-for="item in detail.included" :key="item">
+                <li v-for="item in course.included ?? []" :key="item">
                   <span class="ticks__mark">&#10003;</span>{{ item }}
                 </li>
               </ul>
             </div>
             <div>
-              <span class="eyebrow">Prerequisites</span>
+              <span class="eyebrow">{{ $t('courses.prerequisites') }}</span>
               <ul class="ticks ticks--dash">
-                <li v-for="item in detail.prerequisites" :key="item">
+                <li v-for="item in course.prerequisites ?? []" :key="item">
                   <span class="ticks__mark">&mdash;</span>{{ item }}
                 </li>
               </ul>
@@ -118,19 +140,23 @@ const reserveOpen = ref(false)
 
           <div data-fade class="instructor">
             <div class="instructor__photo">
-              <ImageSlot :src="instructor.photo" :alt="instructor.name" placeholder="instructor" />
+              <ImageSlot
+                :src="instructor?.images?.preview"
+                :alt="instructor?.name"
+                placeholder="instructor"
+              />
             </div>
             <div>
-              <div class="mono instructor__label">Your instructor</div>
-              <div class="instructor__name">{{ instructor.name }}</div>
-              <p class="instructor__bio">{{ instructor.bio }}</p>
+              <div class="mono instructor__label">{{ $t('courses.instructor') }}</div>
+              <div class="instructor__name">{{ instructor?.name }}</div>
+              <p class="instructor__bio">{{ instructor?.bio }}</p>
             </div>
           </div>
 
           <div data-fade class="cd__block">
-            <span class="eyebrow">FAQ</span>
+            <span class="eyebrow">{{ $t('courses.faq') }}</span>
             <div class="faqs">
-              <div v-for="(faq, i) in detail.faqs" :key="faq.q" class="faq">
+              <div v-for="(faq, i) in course.faqs ?? []" :key="faq.q" class="faq">
                 <button class="faq__q" :aria-expanded="openFaq === i" @click="toggleFaq(i)">
                   {{ faq.q }}
                   <span class="faq__icon" :class="{ 'faq__icon--on': openFaq === i }">+</span>
@@ -146,43 +172,47 @@ const reserveOpen = ref(false)
         <!-- STICKY ENROLL -->
         <aside data-fade class="enroll">
           <div class="enroll__price">
-            <span class="enroll__amount">{{ course.price }}</span>
-            <span class="mono enroll__per">per seat</span>
+            <span class="enroll__amount">{{ price(course) }}</span>
+            <span class="mono enroll__per">{{ $t('courses.perSeat') }}</span>
           </div>
 
           <div class="enroll__meta">
-            <div><span>Dates</span><span>{{ shortRange }}</span></div>
-            <div><span>Location</span><span>{{ course.loc }}</span></div>
-            <div><span>Seats left</span><span class="enroll__seats">{{ detail.seatsShort }}</span></div>
+            <div><span>{{ $t('courses.dates') }}</span><span>{{ workshopDates(course) }}</span></div>
+            <div><span>{{ $t('courses.location') }}</span><span>{{ course.location }}</span></div>
+            <div>
+              <span>{{ $t('courses.seatsLeft') }}</span>
+              <span class="enroll__seats">
+                {{ $t('courses.seatsOf', { left: course.seats_left, total: course.seats_total }) }}
+              </span>
+            </div>
           </div>
 
           <button
             v-if="!enrolled"
             class="btn btn--solid enroll__submit"
+            :disabled="!course.accepts_reservations"
             @click="reserveOpen = true"
           >
-            Reserve a seat
+            {{ course.is_full ? $t('courses.full') : $t('courses.reserve') }}
           </button>
 
           <div v-else class="enroll__done">
             <div class="enroll__check">&#10003;</div>
-            <div class="enroll__done-title">Seat reserved</div>
-            <p class="enroll__done-copy">Check your inbox for confirmation and an invoice.</p>
+            <div class="enroll__done-title">{{ $t('courses.seatReserved') }}</div>
+            <p class="enroll__done-copy">{{ $t('courses.checkInbox') }}</p>
           </div>
 
-          <p class="mono enroll__fineprint">
-            No payment now &mdash; we&rsquo;ll email your invoice.
-          </p>
+          <p class="mono enroll__fineprint">{{ $t('courses.noPayment') }}</p>
         </aside>
       </div>
     </section>
 
     <footer class="cd__footer mono">
-      <span>&copy; {{ site.year }} ghaith salih &mdash; all rights reserved</span>
+      <span>{{ $t('common.rights', { year: site?.year ?? '', name: site?.name ?? '' }) }}</span>
       <div class="cd__footer-links">
-        <RouterLink to="/courses">All courses</RouterLink>
-        <RouterLink to="/#contact">Contact</RouterLink>
-        <RouterLink to="/">Home &rarr;</RouterLink>
+        <RouterLink to="/courses">{{ $t('courses.all') }}</RouterLink>
+        <RouterLink to="/#contact">{{ $t('nav.contact') }}</RouterLink>
+        <RouterLink to="/">{{ $t('courses.home') }}</RouterLink>
       </div>
     </footer>
 
@@ -192,10 +222,20 @@ const reserveOpen = ref(false)
       @close="reserveOpen = false"
       @reserved="enrolled = true"
     />
+    </template>
   </div>
 </template>
 
 <style scoped>
+.cd__state {
+  padding: 140px var(--gutter);
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 240, 234, 0.5);
+}
+
 .cd {
   position: relative;
   min-height: 100vh;

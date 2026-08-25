@@ -54,6 +54,9 @@ const unwrap = (payload) => payload?.data ?? payload
 
 export const getSite = (locale) => request('/api/site', { locale }).then(unwrap)
 
+export const getReservationQuestions = (locale) =>
+  request('/api/reservation-questions', { locale }).then(unwrap)
+
 export const getPage = (key, locale) => request(`/api/pages/${key}`, { locale }).then(unwrap)
 
 export const getAbout = (locale) => request('/api/about', { locale }).then(unwrap)

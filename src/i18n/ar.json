@@ -37,7 +37,8 @@
     "enterZoom": "",
     "gigapixel": "",
     "dragToExplore": "",
-    "zoomNote": ""
+    "zoomIn": "",
+    "zoomOut": ""
   },
   "blog": {
     "featured": "",
@@ -84,7 +85,10 @@
     "seatReserved": "",
     "checkInbox": "",
     "noPayment": "",
-    "home": ""
+    "home": "",
+    "seatsOf": "",
+    "notFound": "",
+    "full": ""
   },
   "reserve": {
     "title": "",
@@ -94,7 +98,15 @@
     "waitlistedBefore": "",
     "confirmedBefore": "",
     "reference": "",
-    "done": ""
+    "done": "",
+    "close": "",
+    "submit": "",
+    "submitting": "",
+    "checkAnswers": "",
+    "requiredField": "",
+    "reserved": "",
+    "waitlisted": "",
+    "loadFailed": ""
   },
   "footer": {
     "eyebrow": "",

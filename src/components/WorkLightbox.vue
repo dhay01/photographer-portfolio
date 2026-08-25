@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -18,6 +18,76 @@ const counter = computed(
 // A new photo invalidates the deep-zoom view.
 watch(() => props.position, () => (zoomOpen.value = false))
 
+const osdEl = ref(null)
+const osdLoading = ref(false)
+let viewer = null
+
+const destroyViewer = () => {
+  viewer?.destroy()
+  viewer = null
+}
+
+/**
+ * OpenSeadragon is ~150 KB and only a fraction of visitors open deep zoom, so it
+ * is imported on demand rather than bundled into the initial page.
+ */
+watch(zoomOpen, async (open) => {
+  if (!open) {
+    destroyViewer()
+    return
+  }
+
+  await nextTick()
+
+  const source = current.value?.deep_zoom
+  if (!source || !osdEl.value) return
+
+  osdLoading.value = true
+  const { default: OpenSeadragon } = await import('openseadragon')
+
+  // The watcher may have closed again while the chunk was downloading.
+  if (!zoomOpen.value || !osdEl.value) {
+    osdLoading.value = false
+    return
+  }
+
+  viewer = OpenSeadragon({
+    element: osdEl.value,
+    // Described inline rather than by .dzi URL: fetching the descriptor would be
+    // an XHR and so subject to CORS, while the tiles themselves are <img>
+    // requests that are not. This keeps deep zoom working across origins with no
+    // web-server configuration.
+    tileSources: {
+      Image: {
+        xmlns: 'http://schemas.microsoft.com/deepzoom/2008',
+        Url: source.tiles_url,
+        Format: source.format,
+        Overlap: String(source.overlap),
+        TileSize: String(source.tile_size),
+        Size: { Width: String(source.width), Height: String(source.height) },
+      },
+    },
+    // The built-in controls ship as sprite images; the lightbox has its own.
+    showNavigationControl: false,
+    showNavigator: true,
+    navigatorPosition: 'BOTTOM_RIGHT',
+    navigatorHeight: 90,
+    navigatorWidth: 120,
+    gestureSettingsMouse: { clickToZoom: false },
+    animationTime: 0.6,
+    blendTime: 0.2,
+  })
+
+  viewer.addOnceHandler('open', () => (osdLoading.value = false))
+  viewer.addOnceHandler('open-failed', () => (osdLoading.value = false))
+})
+
+const zoomBy = (factor) => {
+  if (!viewer) return
+  viewer.viewport.zoomBy(factor)
+  viewer.viewport.applyConstraints()
+}
+
 const onKey = (e) => {
   if (e.key === 'Escape') {
     if (zoomOpen.value) zoomOpen.value = false
@@ -32,6 +102,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  destroyViewer()
   window.removeEventListener('keydown', onKey)
   document.body.style.overflow = ''
 })
@@ -75,7 +146,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <button v-if="current.is_zoomable" class="zoom-cta mono" @click="zoomOpen = true">
+          <button v-if="current.deep_zoom" class="zoom-cta mono" @click="zoomOpen = true">
             {{ $t('work.enterZoom') }}
           </button>
         </div>
@@ -95,24 +166,47 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="dz__stage">
-      <img v-if="current.src" :src="current.src" :alt="current.title" class="dz__img" />
-      <div class="dz__vignette" />
-      <div class="dz__reticle" />
+      <div ref="osdEl" class="dz__osd" />
+
+      <div v-if="osdLoading" class="dz__loading mono">{{ $t('common.loading') }}</div>
+
       <div class="dz__controls mono">
         <span class="dz__hint">{{ $t('work.dragToExplore') }}</span>
         <span class="dz__sep" />
-        <span class="dz__knob">&minus;</span>
-        <span class="dz__knob dz__knob--on">+</span>
+        <button type="button" class="dz__knob" :aria-label="$t('work.zoomOut')" @click="zoomBy(0.5)">
+          &minus;
+        </button>
+        <button
+          type="button"
+          class="dz__knob dz__knob--on"
+          :aria-label="$t('work.zoomIn')"
+          @click="zoomBy(2)"
+        >
+          +
+        </button>
       </div>
-    </div>
-
-    <div class="dz__foot mono">
-      {{ $t('work.zoomNote') }}
     </div>
   </div>
 </template>
 
 <style scoped>
+.dz__osd {
+  position: absolute;
+  inset: 0;
+}
+
+.dz__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 240, 234, 0.5);
+  pointer-events: none;
+}
+
 .lb {
   position: fixed;
   inset: 0;

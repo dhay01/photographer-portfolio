@@ -1,7 +1,8 @@
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
-import { reservationQuestions, emptyAnswers } from '../data/reservationQuestions'
-import { formatDates } from '../data/courses'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { blankAnswers, useReservationQuestions } from '../composables/useReservationQuestions'
+import { price, workshopDates } from '../lib/format'
 import { createReservation, ApiError } from '../lib/api'
 
 const props = defineProps({
@@ -11,7 +12,20 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'reserved'])
 
-const answers = reactive(emptyAnswers())
+const { t } = useI18n()
+const { questions, error: questionsError } = useReservationQuestions()
+
+// Populated once the question set arrives, and kept in step if it ever changes.
+const answers = reactive({})
+
+watch(
+  questions,
+  (list) => {
+    Object.keys(answers).forEach((key) => delete answers[key])
+    Object.assign(answers, blankAnswers(list))
+  },
+  { immediate: true },
+)
 const seatCount = ref(props.seats)
 const confirmed = ref(false)
 const showErrors = ref(false)
@@ -21,11 +35,16 @@ const formError = ref('')
 const serverErrors = reactive({})
 const result = ref(null)
 
-const isBlank = (q) =>
-  q.type === 'checkbox' ? answers[q.id].length === 0 : String(answers[q.id]).trim() === ''
+const isBlank = (q) => {
+  const value = answers[q.id]
+
+  return q.type === 'checkbox'
+    ? !value?.length
+    : String(value ?? '').trim() === ''
+}
 
 const missing = computed(() =>
-  reservationQuestions.filter((q) => q.required && isBlank(q)).map((q) => q.id),
+  questions.value.filter((q) => q.required && isBlank(q)).map((q) => q.id),
 )
 
 /** Client-side gaps and anything the server rejected, keyed by question id. */
@@ -67,7 +86,7 @@ const submit = async () => {
     }
 
     formError.value = Object.keys(error.errors).length
-      ? 'Please check the highlighted answers.'
+      ? t('reserve.checkAnswers')
       : error.message
 
     await Promise.resolve()
@@ -95,20 +114,25 @@ onBeforeUnmount(() => {
 <template>
   <div class="modal" role="dialog" aria-modal="true" @click.self="emit('close')">
     <div class="modal__panel">
-      <button class="modal__close" aria-label="Close" @click="emit('close')">&times;</button>
+      <button class="modal__close" :aria-label="$t('reserve.close')" @click="emit('close')">&times;</button>
 
       <template v-if="!confirmed">
         <header class="modal__head">
-          <span class="mono modal__kicker">Reserve a seat</span>
+          <span class="mono modal__kicker">{{ $t('reserve.title') }}</span>
           <h3 class="modal__title">{{ course.title }}</h3>
           <div class="mono modal__sub">
-            {{ formatDates(course) }} &middot; {{ course.loc }} &middot; {{ course.price }} per seat
+            {{ workshopDates(course) }} &middot; {{ course.location }} &middot;
+            {{ price(course) }} {{ $t('reserve.perSeat') }}
           </div>
         </header>
 
-        <form class="rf" novalidate @submit.prevent="submit">
+        <p v-if="questionsError" class="mono modal__formerror" role="alert">
+          {{ $t('reserve.loadFailed') }}
+        </p>
+
+        <form v-else-if="questions.length" class="rf" novalidate @submit.prevent="submit">
           <div
-            v-for="q in reservationQuestions"
+            v-for="q in questions"
             :key="q.id"
             class="rf__field"
             :class="{ 'rf__field--error': showErrors && invalid.includes(q.id) }"
@@ -153,51 +177,51 @@ onBeforeUnmount(() => {
             />
 
             <p v-if="showErrors && invalid.includes(q.id)" class="mono rf__error">
-              {{ serverErrors[q.id] ?? 'This one is required.' }}
+              {{ serverErrors[q.id] ?? $t('reserve.requiredField') }}
             </p>
           </div>
 
           <div class="rf__field rf__seats">
-            <label for="q-seats" class="rf__label">Seats</label>
+            <label for="q-seats" class="rf__label">{{ $t('reserve.seats') }}</label>
             <input id="q-seats" v-model.number="seatCount" class="rf__input" type="number" min="1" max="6" />
           </div>
 
           <p v-if="formError" class="mono modal__formerror" role="alert">{{ formError }}</p>
 
           <button type="submit" class="btn btn--solid modal__submit" :disabled="submitting">
-            {{ submitting ? 'Sending…' : 'Confirm reservation' }}
+            {{ submitting ? $t('reserve.submitting') : $t('reserve.submit') }}
           </button>
-          <p class="mono modal__fineprint">
-            No payment now &mdash; we&rsquo;ll email you an invoice and joining details.
-          </p>
+          <p class="mono modal__fineprint">{{ $t('reserve.noPayment') }}</p>
         </form>
+
+        <p v-else class="mono modal__loading">{{ $t('common.loading') }}</p>
       </template>
 
       <div v-else class="modal__done">
         <div class="modal__check">{{ result?.waitlisted ? '⋯' : '✓' }}</div>
         <h3 class="modal__title">
-          {{ result?.waitlisted ? 'You’re on the waitlist' : 'Seat reserved' }}
+          {{ result?.waitlisted ? $t('reserve.waitlisted') : $t('reserve.reserved') }}
         </h3>
         <p class="modal__done-copy">
-          <template v-if="result?.waitlisted">
-            <span class="modal__hl">{{ course.title }}</span> is full, so we&rsquo;ve added you to
-            the waitlist. We&rsquo;ll email you the moment a seat frees up.
-          </template>
-          <template v-else>
-            Your spot on <span class="modal__hl">{{ course.title }}</span> is held. Check your inbox
-            for confirmation and joining details.
-          </template>
+          <span class="modal__hl">{{ course.title }}</span>
+          {{ result?.waitlisted ? $t('reserve.waitlistedBefore') : $t('reserve.confirmedBefore') }}
         </p>
         <p v-if="result?.reference" class="mono modal__reference">
-          Reference {{ result.reference }}
+          {{ $t('reserve.reference', { reference: result.reference }) }}
         </p>
-        <button class="btn modal__done-btn" @click="emit('close')">Done</button>
+        <button class="btn modal__done-btn" @click="emit('close')">{{ $t('reserve.done') }}</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.modal__loading {
+  padding: 40px 0;
+  text-align: center;
+  opacity: 0.5;
+}
+
 .modal {
   position: fixed;
   inset: 0;

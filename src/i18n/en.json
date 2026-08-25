@@ -37,7 +37,8 @@
     "enterZoom": "⤢ Enter deep-zoom",
     "gigapixel": "⤢ Gigapixel deep-zoom",
     "dragToExplore": "drag to explore",
-    "zoomNote": "Preview only — production mounts an OpenSeadragon tile pyramid for true gigapixel pan & zoom."
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
   },
   "blog": {
     "featured": "Featured",
@@ -84,7 +85,10 @@
     "seatReserved": "Seat reserved",
     "checkInbox": "Check your inbox for confirmation and an invoice.",
     "noPayment": "No payment now — we’ll email your invoice.",
-    "home": "Home →"
+    "home": "Home →",
+    "seatsOf": "{left} of {total}",
+    "notFound": "That course could not be found.",
+    "full": "Fully booked"
   },
   "reserve": {
     "title": "Reserve a seat",
@@ -94,7 +98,15 @@
     "waitlistedBefore": "is full, so we’ve added you to the waitlist. We’ll email you the moment a seat frees up.",
     "confirmedBefore": "is held. Check your inbox for confirmation and joining details.",
     "reference": "Reference {reference}",
-    "done": "Done"
+    "done": "Done",
+    "close": "Close",
+    "submit": "Confirm reservation",
+    "submitting": "Sending…",
+    "checkAnswers": "Please check the highlighted answers.",
+    "requiredField": "This one is required.",
+    "reserved": "Seat reserved",
+    "waitlisted": "You’re on the waitlist",
+    "loadFailed": "The booking form could not be loaded. Please try again."
   },
   "footer": {
     "eyebrow": "(05) — Get in touch",
