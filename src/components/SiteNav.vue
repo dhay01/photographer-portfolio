@@ -1,7 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useSite } from '../composables/useSite'
+import { LOCALES, setLocale } from '../i18n'
 
 defineProps({
   // Home overlays the nav on the hero; inner pages sit it above content.
@@ -21,6 +23,23 @@ const links = [
   { key: 'contact', to: '/#contact' },
 ]
 
+const { locale } = useI18n()
+
+/**
+ * Disabled until the Arabic content exists: the interface strings are ready in
+ * ar.json but every translatable field in the database is still English-only, so
+ * switching would show a half-translated site.
+ *
+ * Removing `disabled` on the buttons below is all that is needed to turn it on —
+ * the handler is already wired.
+ */
+const languageEnabled = false
+
+const switchTo = (code) => {
+  if (!languageEnabled || code === locale.value) return
+  setLocale(code)
+}
+
 const route = useRoute()
 const open = ref(false)
 
@@ -39,6 +58,29 @@ watch(() => route.fullPath, () => (open.value = false))
       </RouterLink>
     </div>
 
+    <div
+      data-reveal
+      class="lang"
+      role="group"
+      :aria-label="$t('nav.language')"
+      :title="languageEnabled ? null : $t('nav.languageSoon')"
+    >
+      <button
+        v-for="option in LOCALES"
+        :key="option.code"
+        type="button"
+        class="lang__option"
+        :class="{ 'lang__option--on': option.code === locale }"
+        :disabled="!languageEnabled"
+        :aria-disabled="!languageEnabled"
+        :aria-pressed="option.code === locale"
+        :lang="option.code"
+        @click="switchTo(option.code)"
+      >
+        {{ option.label }}
+      </button>
+    </div>
+
     <button
       data-reveal
       class="nav-toggle"
@@ -54,6 +96,28 @@ watch(() => route.fullPath, () => (open.value = false))
       <RouterLink v-for="link in links" :key="link.to" :to="link.to" class="nav-drawer__link">
         {{ $t(`nav.${link.key}`) }}
       </RouterLink>
+
+      <div
+        class="lang lang--drawer"
+        role="group"
+        :aria-label="$t('nav.language')"
+        :title="languageEnabled ? null : $t('nav.languageSoon')"
+      >
+        <button
+          v-for="option in LOCALES"
+          :key="option.code"
+          type="button"
+          class="lang__option"
+          :class="{ 'lang__option--on': option.code === locale }"
+          :disabled="!languageEnabled"
+          :aria-disabled="!languageEnabled"
+          :aria-pressed="option.code === locale"
+          :lang="option.code"
+          @click="switchTo(option.code)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
     </div>
   </nav>
 </template>
@@ -107,6 +171,52 @@ watch(() => route.fullPath, () => (open.value = false))
 .nav-link:hover,
 .nav-link.router-link-exact-active {
   opacity: 0.9;
+}
+
+.lang {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.lang__option {
+  min-width: 30px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.lang__option--on {
+  background: rgba(242, 240, 234, 0.08);
+  opacity: 0.85;
+}
+
+.lang__option:disabled {
+  cursor: not-allowed;
+}
+
+/* Dimmed as a whole while the feature is off, rather than per button, so the
+   active locale still reads as the current one. */
+.lang:has(.lang__option:disabled) {
+  opacity: 0.5;
+}
+
+.lang--drawer {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 14px;
 }
 
 .nav-toggle {
@@ -163,6 +273,14 @@ watch(() => route.fullPath, () => (open.value = false))
 @media (min-width: 900px) {
   .nav-links {
     display: flex;
+  }
+
+  .lang {
+    display: inline-flex;
+  }
+
+  .lang--drawer {
+    display: none;
   }
 
   .nav-toggle,

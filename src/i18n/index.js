@@ -10,7 +10,16 @@ import ar from './ar.json'
  * Arabic keys exist but are empty; `fallbackLocale` means an untranslated key
  * renders in English instead of blank.
  */
-export const SUPPORTED_LOCALES = ['en', 'ar']
+/**
+ * The locales the interface can present, in the order the switcher shows them.
+ * `label` is what appears in the navbar; `native` is for accessible names.
+ */
+export const LOCALES = [
+  { code: 'en', label: 'EN', native: 'English', dir: 'ltr' },
+  { code: 'ar', label: 'ع', native: 'العربية', dir: 'rtl' },
+]
+
+export const SUPPORTED_LOCALES = LOCALES.map((locale) => locale.code)
 
 export const i18n = createI18n({
   legacy: false,

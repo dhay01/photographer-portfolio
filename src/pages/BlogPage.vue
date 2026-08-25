@@ -21,14 +21,6 @@ const { data: posts } = useContent(getPosts, { initial: [] })
 const featuredPost = computed(() => posts.value?.find((p) => p.is_featured) ?? null)
 const listedPosts = computed(() => (posts.value ?? []).filter((p) => !p.is_featured))
 
-const email = ref('')
-const subscribed = ref(false)
-
-const onSubscribe = () => {
-  subscribed.value = true
-  email.value = ''
-}
-
 const footerLinks = computed(() => {
   const instagram = site.value?.socials?.[0]
 
@@ -92,29 +84,6 @@ const footerLinks = computed(() => {
 
       <div class="articles__grid">
         <PostCard v-for="post in listedPosts" :key="post.slug" :post="post" />
-      </div>
-    </section>
-
-    <!-- SUBSCRIBE -->
-    <section class="subscribe">
-      <div class="subscribe__inner">
-        <h2 class="subscribe__title">
-          {{ page?.sections?.subscribe?.heading }}<br />{{ page?.sections?.subscribe?.body }}
-        </h2>
-        <form class="subscribe__form" @submit.prevent="onSubscribe">
-          <input
-            v-model="email"
-            class="field subscribe__field"
-            type="email"
-            required
-            placeholder="your@email.com"
-            aria-label="Email address"
-          />
-          <button type="submit" class="btn btn--solid subscribe__btn">{{ $t('blog.subscribe') }}</button>
-          <span class="mono subscribe__msg" :style="{ opacity: subscribed ? 1 : 0 }">
-            {{ $t('blog.subscribeThanks') }}
-          </span>
-        </form>
       </div>
     </section>
 
@@ -297,53 +266,5 @@ const footerLinks = computed(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: clamp(24px, 3vw, 44px);
-}
-
-/* ---------- subscribe ---------- */
-
-.subscribe {
-  padding: clamp(50px, 7vw, 100px) var(--gutter);
-  border-top: 1px solid var(--line);
-}
-
-.subscribe__inner {
-  max-width: var(--maxw);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
-  flex-wrap: wrap;
-}
-
-.subscribe__title {
-  font-weight: 400;
-  font-size: clamp(24px, 2.6vw, 38px);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-wrap: pretty;
-}
-
-.subscribe__form {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.subscribe__field {
-  padding: 14px 22px;
-  min-width: 240px;
-}
-
-.subscribe__btn {
-  padding: 14px 26px;
-}
-
-.subscribe__msg {
-  font-size: 11px;
-  color: var(--accent);
-  transition: opacity 0.4s ease;
-  width: 100%;
 }
 </style>

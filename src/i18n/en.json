@@ -7,7 +7,9 @@
     "journal": "Journal",
     "contact": "Contact",
     "menu": "Menu",
-    "close": "Close"
+    "close": "Close",
+    "language": "Language",
+    "languageSoon": "Arabic is coming soon"
   },
   "common": {
     "loading": "Loading…",
@@ -44,8 +46,6 @@
     "featured": "Featured",
     "readStory": "Read the story",
     "allArticles": "All articles",
-    "subscribe": "Subscribe",
-    "subscribeThanks": "Thanks — you’re on the list.",
     "back": "← The journal",
     "unwritten": "This story is still being written — check back soon.",
     "writtenBy": "Written by",

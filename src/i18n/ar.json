@@ -7,7 +7,9 @@
     "journal": "",
     "contact": "",
     "menu": "",
-    "close": ""
+    "close": "",
+    "language": "",
+    "languageSoon": ""
   },
   "common": {
     "loading": "",
@@ -44,8 +46,6 @@
     "featured": "",
     "readStory": "",
     "allArticles": "",
-    "subscribe": "",
-    "subscribeThanks": "",
     "back": "",
     "unwritten": "",
     "writtenBy": "",
