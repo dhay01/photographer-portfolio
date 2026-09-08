@@ -19,7 +19,7 @@ const links = [
   { key: 'about', to: '/about' },
   { key: 'work', to: '/work' },
   { key: 'courses', to: '/courses' },
-  { key: 'journal', to: '/blog' },
+  { key: 'blog', to: '/blog' },
   { key: 'contact', to: '/#contact' },
 ]
 

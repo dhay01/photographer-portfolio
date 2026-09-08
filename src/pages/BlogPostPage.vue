@@ -42,7 +42,7 @@ onMounted(() => {
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
 const footerLinks = [
-  { key: 'journal', to: '/blog' },
+  { key: 'blog', to: '/blog' },
   { key: 'contact', to: '/#contact' },
   { key: 'home', to: '/' },
 ]

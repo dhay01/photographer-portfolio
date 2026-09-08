@@ -4,8 +4,10 @@ import SiteNav from '../components/SiteNav.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 import HeroCarousel from '../components/HeroCarousel.vue'
 import ImageSlot from '../components/ImageSlot.vue'
+import PostCard from '../components/PostCard.vue'
+import WorkLightbox from '../components/WorkLightbox.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import { getCategories, getHeroSlides, getPage, getWorkshops } from '../lib/api'
+import { getCategories, getHeroSlides, getPage, getPhotos, getPosts, getWorkshops } from '../lib/api'
 import { useContent } from '../composables/useContent'
 import { useSite } from '../composables/useSite'
 
@@ -17,6 +19,10 @@ const { data: page } = useContent(getPage.bind(null, 'home'))
 const { data: slides } = useContent(getHeroSlides, { initial: [] })
 const { data: workshops } = useContent(getWorkshops, { initial: [] })
 const { data: galleries } = useContent(() => getCategories('work'), { initial: [] })
+// getPhotos takes the category first, so the locale useContent appends has to be
+// placed explicitly rather than sliding into the filter argument.
+const { data: photos } = useContent((locale) => getPhotos(null, locale), { initial: [] })
+const { data: posts } = useContent(getPosts, { initial: [] })
 
 // Named blocks from the dashboard; `section('shop')` is undefined-safe so a
 // section that has not been filled in yet simply renders empty.
@@ -31,6 +37,30 @@ const featuredGalleries = computed(() =>
 const heroSlides = computed(() =>
   (slides.value ?? []).map((slide) => ({ src: slide.images?.preview, alt: slide.alt })),
 )
+
+// Deep-zoom tiles are generated per photo, and most frames have not been tiled
+// yet — often none of them. Zoomable ones lead, the rest pad the strip so the
+// section is never a lone tile or an empty gap, and only the genuinely zoomable
+// ones advertise the deep-zoom badge.
+const gigaPhotos = computed(() => {
+  const all = photos.value ?? []
+  return [
+    ...all.filter((photo) => photo.is_zoomable),
+    ...all.filter((photo) => !photo.is_zoomable),
+  ].slice(0, 4)
+})
+const gigaHero = computed(() => gigaPhotos.value[0] ?? null)
+const gigaRest = computed(() => gigaPhotos.value.slice(1))
+
+const gigaPos = ref(null)
+const openGiga = (i) => (gigaPos.value = i)
+const closeGiga = () => (gigaPos.value = null)
+const stepGiga = (delta) => {
+  const n = gigaPhotos.value.length
+  gigaPos.value = (gigaPos.value + delta + n) % n
+}
+
+const latestPosts = computed(() => (posts.value ?? []).slice(0, 3))
 
 const emphasise = (text) => {
   if (!text) return ''
@@ -90,62 +120,12 @@ const onNotify = () => {
       </div>
     </section>
 
-    <!-- TRUSTED BY -->
-    <section class="clients">
-      <div class="clients__marquee-wrap">
-        <div class="clients__marquee">
-          <span v-for="(client, i) in [...items('clients'), ...items('clients')]" :key="i">
-            {{ client.label }}
-          </span>
-        </div>
-      </div>
-      <div class="clients__rating">
-        <div class="mono clients__stars">
-          <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>&nbsp;&nbsp;4.9/5
-        </div>
-        <div class="mono clients__note">{{ section('clients').note }}</div>
-      </div>
-    </section>
-
-    <!-- ABOUT -->
-    <section id="about" class="about">
-      <div class="about__grid">
-        <div data-fade class="about__portrait">
-          <ImageSlot
-            :src="site?.author?.images?.preview"
-            :alt="site?.author?.name"
-            fit="cover"
-          />
-          <div data-bracket class="bracket bracket--sm bracket--tl" />
-          <div data-bracket class="bracket bracket--sm bracket--br" />
-        </div>
-
-        <div data-fade>
-          <span class="eyebrow">{{ section('about').eyebrow }}</span>
-          <!-- Heading allows <em> for the accent style; authored in the dashboard. -->
-          <h2 class="about__lead" v-html="section('about').heading" />
-          <p class="body-copy about__copy">{{ section('about').body }}</p>
-
-          <div class="stats">
-            <div v-for="stat in items('stats')" :key="stat.value">
-              <div class="stats__value">{{ stat.value }}</div>
-              <div class="stats__label mono">{{ stat.label }}</div>
-            </div>
-          </div>
-
-          <RouterLink to="/about" class="btn about__cta">
-            {{ $t('home.readStory') }} <span class="arrow">&rarr;</span>
-          </RouterLink>
-        </div>
-      </div>
-    </section>
-
     <!-- FEATURED GALLERIES -->
     <section id="work" class="galleries">
       <div class="shell">
         <div class="section-head">
           <div>
-            <span class="eyebrow">(02) &mdash; Selected work</span>
+            <span class="eyebrow">{{ $t('home.workEyebrow') }}</span>
             <h2 class="display">{{ section('work').heading }}</h2>
           </div>
           <RouterLink to="/work" class="link-mono">
@@ -189,6 +169,104 @@ const onNotify = () => {
       </div>
     </section>
 
+    <!-- GIGAPIXEL -->
+    <section id="gigapixel" class="section section--rule">
+      <div class="shell">
+        <div class="section-head">
+          <div data-fade>
+            <span class="eyebrow">{{ $t('home.gigapixelEyebrow') }}</span>
+            <h2 class="display">{{ $t('home.gigapixelHeading') }}</h2>
+          </div>
+          <p data-fade class="lede giga__note">{{ $t('home.gigapixelBody') }}</p>
+        </div>
+
+        <div v-if="gigaHero" class="giga">
+          <button
+            type="button"
+            data-fade
+            data-tile
+            class="giga__frame"
+            :aria-label="`Open ${gigaHero.title}`"
+            @click="openGiga(0)"
+          >
+            <div data-tile-img class="giga__img">
+              <ImageSlot
+                :src="gigaHero.images?.full ?? gigaHero.images?.preview"
+                :alt="gigaHero.alt"
+                :placeholder="gigaHero.title"
+                fit="cover"
+              />
+            </div>
+            <div class="giga__scrim" />
+            <span v-if="gigaHero.is_zoomable" class="giga__badge mono">
+              {{ $t('home.gigapixelCta') }}
+            </span>
+            <span class="giga__caption">
+              <span class="giga__title">{{ gigaHero.title }}</span>
+              <span class="giga__where mono">
+                {{ gigaHero.location }}
+                <template v-if="gigaHero.is_zoomable">
+                  &nbsp;&middot;&nbsp;{{ $t('home.gigapixelHint') }}
+                </template>
+              </span>
+            </span>
+          </button>
+
+          <div v-if="gigaRest.length" class="giga__strip">
+            <button
+              v-for="(shot, i) in gigaRest"
+              :key="shot.slug"
+              type="button"
+              data-fade
+              class="giga__thumb"
+              :aria-label="`Open ${shot.title}`"
+              @click="openGiga(i + 1)"
+            >
+              <ImageSlot
+                :src="shot.images?.thumb ?? shot.images?.preview"
+                :alt="shot.alt"
+                :placeholder="shot.title"
+                fit="cover"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="about">
+      <div class="about__grid">
+        <div data-fade class="about__portrait">
+          <ImageSlot
+            :src="site?.author?.images?.preview"
+            :alt="site?.author?.name"
+            fit="cover"
+          />
+          <div data-bracket class="bracket bracket--sm bracket--tl" />
+          <div data-bracket class="bracket bracket--sm bracket--br" />
+        </div>
+
+        <div data-fade>
+          <span class="eyebrow">{{ section('about').eyebrow }}</span>
+          <!-- Heading allows <em> for the accent style; authored in the dashboard. -->
+          <h2 class="about__lead" v-html="section('about').heading" />
+          <p class="body-copy about__copy">{{ section('about').body }}</p>
+
+          <div class="stats">
+            <div v-for="stat in items('stats')" :key="stat.value">
+              <div class="stats__value">{{ stat.value }}</div>
+              <div class="stats__label mono">{{ stat.label }}</div>
+            </div>
+          </div>
+
+          <RouterLink to="/about" class="btn about__cta">
+            {{ $t('home.readStory') }} <span class="arrow">&rarr;</span>
+          </RouterLink>
+        </div>
+      </div>
+    </section>
+
     <!-- COURSES -->
     <section id="courses" class="section section--rule">
       <div class="shell">
@@ -225,6 +303,38 @@ const onNotify = () => {
         <RouterLink to="/courses" data-fade class="btn courses__cta">
           {{ $t('home.seeSchedule') }} <span class="arrow">&rarr;</span>
         </RouterLink>
+
+        <div data-fade class="private">
+          <div>
+            <span class="eyebrow private__eyebrow">{{ $t('home.privateEyebrow') }}</span>
+            <div class="private__title">{{ $t('home.privateTitle') }}</div>
+            <p class="body-copy private__body">{{ $t('home.privateBody') }}</p>
+          </div>
+          <button type="button" class="btn private__cta" disabled>
+            {{ $t('home.privateCta') }}
+            <span class="private__soon mono">{{ $t('home.soon') }}</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOG -->
+    <section id="blog" class="section section--rule">
+      <div class="shell">
+        <div class="section-head">
+          <div data-fade>
+            <span class="eyebrow">{{ $t('home.blogEyebrow') }}</span>
+            <h2 class="display">{{ $t('home.blogHeading') }}</h2>
+          </div>
+          <RouterLink to="/blog" class="link-mono">
+            {{ $t('home.allPosts') }} <span class="arrow">&rarr;</span>
+          </RouterLink>
+        </div>
+
+        <div class="posts__grid">
+          <PostCard v-for="post in latestPosts" :key="post.slug" :post="post" />
+        </div>
       </div>
     </section>
 
@@ -282,6 +392,31 @@ const onNotify = () => {
         </div>
       </div>
     </section>
+
+    <!-- TRUSTED BY -->
+    <section class="clients">
+      <div class="clients__marquee-wrap">
+        <div class="clients__marquee">
+          <span v-for="(client, i) in [...items('clients'), ...items('clients')]" :key="i">
+            {{ client.label }}
+          </span>
+        </div>
+      </div>
+      <div class="clients__rating">
+        <div class="mono clients__stars">
+          <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>&nbsp;&nbsp;4.9/5
+        </div>
+        <div class="mono clients__note">{{ section('clients').note }}</div>
+      </div>
+    </section>
+
+        <WorkLightbox
+      v-if="gigaPos !== null"
+      :items="gigaPhotos"
+      :position="gigaPos"
+      @close="closeGiga"
+      @step="stepGiga"
+    />
 
     <SiteFooter />
   </div>
@@ -393,7 +528,7 @@ const onNotify = () => {
 
 .clients {
   padding: clamp(34px, 4vw, 54px) var(--gutter);
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -730,7 +865,7 @@ const onNotify = () => {
 
 .product__media {
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 3;
   background: var(--panel);
 }
 
@@ -773,11 +908,11 @@ const onNotify = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px;
+  padding: 12px 14px;
 }
 
 .product__title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -838,5 +973,192 @@ const onNotify = () => {
   color: var(--accent);
   transition: opacity 0.4s ease;
   width: 100%;
+}
+
+/* ---------- gigapixel ---------- */
+
+.giga__note {
+  max-width: 340px;
+}
+
+.giga {
+  display: grid;
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+.giga__frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+  color: inherit;
+  cursor: pointer;
+}
+
+.giga__img {
+  position: absolute;
+  inset: 0;
+  transition: transform 1.2s cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.giga__frame:hover .giga__img,
+.giga__frame:focus-visible .giga__img {
+  transform: scale(1.03);
+}
+
+.giga__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(11, 12, 14, 0) 45%, rgba(11, 12, 14, 0.8) 100%);
+}
+
+.giga__badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  padding: 8px 14px;
+  border-radius: 100px;
+  background: rgba(11, 12, 14, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(246, 139, 43, 0.5);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.giga__caption {
+  position: absolute;
+  left: clamp(16px, 2vw, 28px);
+  bottom: clamp(14px, 1.8vw, 24px);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: start;
+}
+
+.giga__title {
+  font-size: clamp(20px, 2.2vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.giga__where {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.giga__strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+.giga__thumb {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel);
+  cursor: pointer;
+  filter: grayscale(0.4);
+  transition: filter 0.5s ease, border-color 0.5s ease;
+}
+
+.giga__thumb:hover,
+.giga__thumb:focus-visible {
+  filter: grayscale(0);
+  border-color: var(--line-strong);
+}
+
+@media (max-width: 640px) {
+  .giga__frame {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* ---------- private workshops ---------- */
+
+.private {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: clamp(28px, 3.4vw, 44px);
+  padding: clamp(22px, 2.4vw, 32px);
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: rgba(20, 21, 24, 0.4);
+}
+
+.private__eyebrow {
+  color: var(--accent);
+}
+
+.private__title {
+  margin-top: 12px;
+  font-size: clamp(19px, 1.9vw, 25px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.private__body {
+  margin-top: 10px;
+  max-width: 460px;
+}
+
+/* Disabled until private bookings open; the button stays visible so the option
+   is discoverable, but reads clearly as not-yet-available. */
+.private__cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.private__cta:disabled:hover {
+  border-color: var(--line);
+  background: transparent;
+}
+
+.private__soon {
+  padding: 5px 11px;
+  border: 1px solid var(--accent);
+  border-radius: 100px;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+
+/* ---------- blog ---------- */
+
+.posts__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(18px, 2.2vw, 32px);
+}
+
+@media (max-width: 900px) {
+  .posts__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .posts__grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

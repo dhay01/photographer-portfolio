@@ -197,24 +197,30 @@ watch(photos, async () => {
 .masonry {
   padding: 0 clamp(16px, 2.5vw, 40px) clamp(60px, 8vw, 110px);
   column-count: 1;
-  column-gap: clamp(14px, 1.6vw, 22px);
+  column-gap: clamp(10px, 1.2vw, 16px);
 }
 
-@media (min-width: 720px) {
+@media (min-width: 560px) {
   .masonry {
     column-count: 2;
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 900px) {
   .masonry {
     column-count: 3;
   }
 }
 
+@media (min-width: 1400px) {
+  .masonry {
+    column-count: 4;
+  }
+}
+
 .tile {
   break-inside: avoid;
-  margin-bottom: clamp(14px, 1.6vw, 22px);
+  margin-bottom: clamp(10px, 1.2vw, 16px);
   position: relative;
   border-radius: 8px;
   overflow: hidden;
@@ -224,6 +230,8 @@ watch(photos, async () => {
 
 .tile__img {
   position: relative;
+  max-height: 54vh;
+  overflow: hidden;
   transition: transform 1s cubic-bezier(0.2, 0, 0.1, 1);
 }
 
@@ -290,7 +298,7 @@ watch(photos, async () => {
 }
 
 .tile__name {
-  font-size: clamp(15px, 1.3vw, 18px);
+  font-size: clamp(13px, 1.1vw, 15px);
   font-weight: 500;
   letter-spacing: -0.01em;
 }

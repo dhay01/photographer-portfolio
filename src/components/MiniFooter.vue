@@ -4,7 +4,7 @@ import { useSite } from '../composables/useSite'
 const { site } = useSite()
 
 defineProps({
-  // Left-most link differs per page (journal vs. all courses). Each entry is
+  // Left-most link differs per page (blog vs. all courses). Each entry is
   // either { key } for a translated nav label or { label } for a name that
   // comes from the dashboard, such as a social network.
   links: { type: Array, required: true },
