@@ -25,11 +25,28 @@ const all = computed(() => photos.value ?? [])
 const shot = (photo) => photo.images?.full ?? photo.images?.preview
 const withImages = computed(() => all.value.filter(shot))
 
-// Two frames carry the parallax. Untiled photographs would parallax a grey
-// placeholder, so anything with a file wins the slot.
-const parallaxShots = computed(() =>
-  (withImages.value.length ? withImages.value : all.value).slice(0, 2),
-)
+const ratioOf = (photo) => {
+  const [w, h] = String(photo?.ratio ?? '3/2').split('/').map(Number)
+  return h ? w / h : 1.5
+}
+
+// The opening frame, then a run of photographs shown at full width with no
+// chrome on them at all. Untiled photographs would scroll a grey placeholder,
+// so anything with a file wins a slot, and the widest go first — they are what
+// the full width is for.
+const opener = computed(() => withImages.value[0] ?? all.value[0] ?? null)
+
+const panoramas = computed(() => {
+  const pool = withImages.value.slice(1)
+  const wide = pool.filter((photo) => ratioOf(photo) >= 1.6)
+  // One panorama is not a run. Until more frames are tiled and uploaded, fall
+  // back to the widest of whatever else is there rather than showing a single
+  // band and calling it a section.
+  if (wide.length >= 2) return wide.slice(0, 3)
+  return [...pool].sort((a, b) => ratioOf(b) - ratioOf(a)).slice(0, 3)
+})
+
+const parallaxShots = computed(() => (opener.value ? [opener.value, ...panoramas.value] : []))
 
 // Deep-zoom tiles are generated per photograph and most have not been through
 // it yet; the slide falls back so the section is never empty.
@@ -117,67 +134,58 @@ onBeforeUnmount(() => ctx?.revert())
       <button type="button" class="work__retry" @click="reload()">{{ $t('common.retry') }}</button>
     </p>
 
-    <!-- PARALLAX -->
+    <!-- OPENING FRAME -->
+    <section v-if="opener" data-para class="para para--lead">
+      <div data-para-img class="para__img">
+        <ImageSlot :src="shot(opener)" :alt="opener.alt" :placeholder="opener.title" fit="cover" />
+      </div>
+      <div class="para__scrim" />
+
+      <div class="para__copy">
+        <span class="eyebrow para__eyebrow">{{ page?.eyebrow }}</span>
+        <h1 class="para__title">{{ page?.title }}</h1>
+      </div>
+
+      <span class="para__cue" aria-hidden="true">&#8964;</span>
+    </section>
+
+    <!-- PANORAMAS — nothing on top of them -->
     <section
-      v-for="(photo, i) in parallaxShots"
+      v-for="photo in panoramas"
       :key="photo.slug"
       data-para
-      :class="['para', { 'para--lead': i === 0 }]"
+      class="para"
+      role="button"
+      tabindex="0"
+      :aria-label="`Open ${photo.title}`"
+      @click="openLightbox(withImages, withImages.indexOf(photo))"
+      @keydown.enter="openLightbox(withImages, withImages.indexOf(photo))"
     >
       <div data-para-img class="para__img">
         <ImageSlot :src="shot(photo)" :alt="photo.alt" :placeholder="photo.title" fit="cover" />
       </div>
-      <div class="para__scrim" />
-
-      <div v-if="i === 0" class="para__copy">
-        <span class="eyebrow para__eyebrow">{{ page?.eyebrow }}</span>
-        <h1 class="para__title">{{ page?.title }}</h1>
-      </div>
-      <div v-else class="para__cap mono">{{ photo.title }}</div>
     </section>
 
-    <!-- CATEGORY GRID -->
-    <section id="galleries" class="section section--rule">
+    <!-- COLLECTIONS -->
+    <section id="galleries" class="section collections">
       <div class="shell">
-        <div class="section-head">
-          <div>
-            <span class="eyebrow">{{ $t('work.galleriesEyebrow') }}</span>
-            <h2 class="display">{{ $t('work.galleriesHeading') }}</h2>
-          </div>
-        </div>
+        <h2 class="collections__title">{{ $t('work.galleriesHeading') }}</h2>
+        <p class="collections__body">{{ page?.intro ?? $t('work.galleriesBody') }}</p>
 
         <div class="cats">
           <button
-            v-for="(c, i) in categories"
+            v-for="c in categories"
             :key="c.slug"
             data-cat
             type="button"
             class="cat"
-            :style="{
-              gridColumn: `span ${c.grid_span ?? 4}`,
-              aspectRatio: c.grid_ratio ?? '4 / 3',
-            }"
             :aria-label="`Open ${c.name}`"
             @click="openLightbox(photosIn(c.slug))"
           >
-            <div class="cat__img">
-              <ImageSlot
-                :src="c.images?.preview"
-                :alt="c.name"
-                :placeholder="c.name"
-                fit="cover"
-              />
-            </div>
-            <div class="cat__scrim" />
-            <div class="cat__meta">
-              <div>
-                <span class="cat__n mono">{{ String(i + 1).padStart(2, '0') }}</span>
-                <div class="cat__name">{{ c.name }}</div>
-              </div>
-              <span class="cat__count mono">
-                {{ $t('home.frames', { count: c.photos_count ?? 0 }) }}
-              </span>
-            </div>
+            <span class="cat__img">
+              <ImageSlot :src="c.images?.preview" :alt="c.name" :placeholder="c.name" fit="cover" />
+            </span>
+            <span class="cat__name">{{ c.name }}</span>
           </button>
         </div>
       </div>
@@ -253,14 +261,16 @@ onBeforeUnmount(() => ctx?.revert())
 
 .para {
   position: relative;
-  height: 74svh;
-  min-height: 420px;
+  height: 86svh;
+  min-height: 430px;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .para--lead {
   height: 100svh;
   min-height: 520px;
+  cursor: default;
 }
 
 /* Taller than the frame on both edges: that overhang is the travel. */
@@ -270,15 +280,16 @@ onBeforeUnmount(() => ctx?.revert())
   will-change: transform;
 }
 
+/* Only the opening frame is darkened, and only because type sits on it. */
 .para__scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(11, 12, 14, 0.7) 0%,
-    rgba(11, 12, 14, 0.1) 36%,
-    rgba(11, 12, 14, 0.8) 100%
+    rgba(11, 12, 14, 0.62) 0%,
+    rgba(11, 12, 14, 0.08) 38%,
+    rgba(11, 12, 14, 0.72) 100%
   );
 }
 
@@ -306,95 +317,105 @@ onBeforeUnmount(() => ctx?.revert())
   text-wrap: balance;
 }
 
-.para__cap {
+.para__cue {
   position: absolute;
-  left: var(--gutter);
-  bottom: clamp(20px, 3vw, 34px);
-  z-index: 2;
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  left: 50%;
+  bottom: clamp(26px, 5vh, 52px);
+  z-index: 3;
+  transform: translateX(-50%);
+  font-size: 26px;
+  line-height: 1;
   opacity: 0.7;
+  animation: gs-cue 2.4s ease-in-out infinite;
 }
 
-/* ---------- category grid ---------- */
+@keyframes gs-cue {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(6px);
+  }
+}
+
+/* ---------- collections ---------- */
+
+.collections {
+  text-align: center;
+}
+
+.collections__title {
+  font-size: clamp(40px, 6.5vw, 92px);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+}
+
+.collections__body {
+  max-width: 620px;
+  margin: 20px auto 0;
+  font-size: clamp(14px, 1.3vw, 17px);
+  line-height: 1.6;
+  font-weight: 300;
+  opacity: 0.72;
+  text-wrap: pretty;
+}
 
 .cats {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: clamp(14px, 1.6vw, 22px);
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(18px, 2.4vw, 34px) clamp(16px, 2vw, 28px);
+  margin-top: clamp(40px, 5vw, 72px);
+  text-align: start;
 }
 
+/* No scrim, no counter, no number badge: the photograph is the whole card and
+   the name sits under it, out of the way. */
 .cat {
-  position: relative;
   display: block;
   padding: 0;
   border: none;
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--panel);
+  background: transparent;
   color: inherit;
   cursor: pointer;
 }
 
 .cat__img {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+.cat__img :deep(.slot-img) {
   transition: transform 1.1s cubic-bezier(0.2, 0, 0.1, 1);
 }
 
-.cat:hover .cat__img,
-.cat:focus-visible .cat__img {
-  transform: scale(1.06);
-}
-
-.cat__scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(11, 12, 14, 0.1) 40%, rgba(11, 12, 14, 0.78) 100%);
-}
-
-.cat__meta {
-  position: absolute;
-  left: 22px;
-  right: 22px;
-  bottom: 20px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  z-index: 2;
-  text-align: start;
-}
-
-.cat__n {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--accent);
+.cat:hover .cat__img :deep(.slot-img),
+.cat:focus-visible .cat__img :deep(.slot-img) {
+  transform: scale(1.05);
 }
 
 .cat__name {
-  font-size: clamp(20px, 2.2vw, 30px);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  margin-top: 4px;
+  display: block;
+  margin-top: 14px;
+  font-size: clamp(15px, 1.4vw, 18px);
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
-.cat__count {
-  font-size: 11px;
-  opacity: 0.7;
-  white-space: nowrap;
+@media (max-width: 900px) {
+  .cats {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 560px) {
   .cats {
     grid-template-columns: 1fr;
-  }
-
-  .cat {
-    grid-column: 1 / -1 !important;
-    aspect-ratio: 4 / 3 !important;
   }
 }
 
