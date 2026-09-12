@@ -134,7 +134,9 @@ useHeroParallax(frame)
 
 .hero-controls {
   position: absolute;
-  right: var(--gutter);
+  /* Inside the hero's frame, so it uses the frame-corrected inset the hero sets
+     for exactly this reason; falls back to the plain gutter anywhere else. */
+  right: var(--hero-inset, var(--gutter));
   bottom: 26px;
   z-index: 7;
   display: flex;

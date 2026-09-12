@@ -433,7 +433,12 @@ const onNotify = () => {
 .hero {
   position: relative;
   width: 100%;
-  padding: 0 clamp(16px, 2.2vw, 34px);
+  /* The hero is held inside a thin frame — that is what the corner brackets sit
+     on. Everything positioned inside the stage therefore has to subtract the
+     frame to end up on the site's own left edge rather than 34px inside it. */
+  --frame: clamp(16px, 2.2vw, 34px);
+  --hero-inset: calc(var(--gutter) - var(--frame));
+  padding: 0 var(--frame);
 }
 
 .hero__stage {
@@ -447,7 +452,7 @@ const onNotify = () => {
 .hero__headline {
   position: absolute;
   top: 16%;
-  left: var(--gutter);
+  left: var(--hero-inset);
   z-index: 7;
   max-width: min(70%, 900px);
 }
@@ -482,7 +487,7 @@ const onNotify = () => {
 .hero__micro {
   position: absolute;
   top: 112px;
-  right: var(--gutter);
+  right: var(--hero-inset);
   z-index: 7;
   text-align: right;
   font-family: var(--font-mono);
@@ -495,7 +500,7 @@ const onNotify = () => {
 
 .hero__intro {
   position: absolute;
-  left: var(--gutter);
+  left: var(--hero-inset);
   bottom: clamp(56px, 9vh, 110px);
   z-index: 7;
   max-width: 440px;

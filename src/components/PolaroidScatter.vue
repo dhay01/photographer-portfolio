@@ -129,12 +129,10 @@ onBeforeUnmount(() => ctx?.revert())
      whole page gains a horizontal scrollbar. */
   overflow: hidden;
 
-  /* Where the text column actually starts: the page is centred at --maxw but
-     never closer to the edge than --gutter, so the margin is whichever of those
-     is larger. Anchoring to this rather than to the viewport is what keeps a
-     polaroid from ever ending up behind a paragraph — on a narrow screen they
-     slide off-frame instead of onto the text. */
-  --edge: max(calc((100vw - var(--maxw)) / 2), var(--gutter));
+  /* --gutter is the page's own left and right edge, so anchoring to it is what
+     keeps a polaroid from ever ending up behind a paragraph: on a narrow screen
+     they slide off-frame instead of onto the text. */
+  --edge: var(--gutter);
 }
 
 .pola {

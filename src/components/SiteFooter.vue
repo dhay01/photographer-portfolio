@@ -56,7 +56,7 @@ const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 <style scoped>
 .site-footer {
   border-top: 1px solid var(--line);
-  padding: clamp(70px, 10vw, 150px) var(--gutter) 40px;
+  padding: clamp(70px, 10vw, 150px) var(--site-gutter) 40px;
 }
 
 .footer-cta {

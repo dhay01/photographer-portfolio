@@ -14,11 +14,28 @@
   --accent: #f68b2b;
   --line: rgba(242, 240, 234, 0.14);
   --line-strong: rgba(242, 240, 234, 0.9);
-  --gutter: clamp(24px, 4vw, 96px);
   /* Grows with the screen instead of stopping dead at 1360px, which left a
      2560 display 47% empty and a 3440 one 60% empty. The upper bound is where
      a line of body copy stops being comfortable to read. */
   --maxw: clamp(1360px, 78vw, 1920px);
+
+  /* The one left and right edge for the whole site. Below the point where the
+     viewport outgrows --maxw this is an ordinary gutter; above it, it becomes
+     exactly the inset that centres a --maxw column. Every full-bleed band —
+     the nav, the hero, the client strip, the footers — pads by this, so their
+     contents line up with the centred sections instead of sitting at their own
+     margin. Before this there were three different left edges on the home page.
+
+     Any element that narrows --maxw must redeclare this too: a custom property
+     is substituted where it is declared, so a descendant that changes --maxw
+     alone would keep the root's inset. */
+  --gutter: max(clamp(24px, 4vw, 96px), calc((100vw - var(--maxw)) / 2));
+
+  /* The same edge, but fixed to the site measure and never re-derived. Pages
+     that narrow --maxw (About, for its margins) would otherwise drag the shared
+     nav and footer inwards with them, so those chrome elements would visibly
+     jump as you moved between pages. */
+  --site-gutter: max(clamp(24px, 4vw, 96px), calc((100vw - clamp(1360px, 78vw, 1920px)) / 2));
 
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
   /* One family across the whole site. The "mono" role is kept because it earns

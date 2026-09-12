@@ -168,6 +168,7 @@ const emphasise = (text) => {
      the margins the polaroids are pinned into. At the site-wide 1360px there
      is about 58px of edge on a 1440 screen, which is not a margin. */
   --maxw: clamp(1180px, 64vw, 1560px);
+  --gutter: max(clamp(24px, 4vw, 96px), calc((100vw - var(--maxw)) / 2));
 }
 
 /* The scatter is an absolute layer behind the page, so the content bands need
