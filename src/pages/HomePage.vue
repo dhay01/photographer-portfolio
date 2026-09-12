@@ -92,11 +92,22 @@ const onNotify = () => {
     <section class="hero">
       <div class="hero__stage">
         <HeroCarousel :slides="heroSlides">
-          <div class="hero__headline">
-            <h1 data-reveal>
-              {{ site?.name }}<span class="hero__mark">&reg;</span>
-            </h1>
-            <p data-reveal class="hero__tagline">{{ site?.tagline }}</p>
+          <div class="hero__layer">
+            <div class="hero__headline">
+              <h1 data-reveal>
+                {{ site?.name }}<span class="hero__mark">&reg;</span>
+              </h1>
+              <p data-reveal class="hero__tagline">{{ site?.tagline }}</p>
+            </div>
+
+            <div data-reveal class="hero__intro">
+              <p>
+                <span class="hero__dash">&mdash;&nbsp;</span><span v-html="emphasise(page?.intro)" />
+              </p>
+              <RouterLink to="/work" class="btn btn--sm">
+                {{ $t('home.viewWork') }} <span class="arrow">&rarr;</span>
+              </RouterLink>
+            </div>
           </div>
 
           <div data-reveal class="hero__micro">
@@ -106,15 +117,6 @@ const onNotify = () => {
               </template>
               {{ line }}
             </template>
-          </div>
-
-          <div data-reveal class="hero__intro">
-            <p>
-              <span class="hero__dash">&mdash;&nbsp;</span><span v-html="emphasise(page?.intro)" />
-            </p>
-            <RouterLink to="/work" class="btn btn--sm">
-              {{ $t('home.viewWork') }} <span class="arrow">&rarr;</span>
-            </RouterLink>
           </div>
         </HeroCarousel>
       </div>
@@ -442,17 +444,38 @@ const onNotify = () => {
   padding-top: 96px;
 }
 
-.hero__headline {
+/*
+ * The title is sized off viewport WIDTH and the stage off viewport HEIGHT, so on
+ * a wide, short window the two grew into each other — the tagline landed on top
+ * of the intro. Laying them out as one column instead of two independently
+ * positioned blocks makes that impossible: they share the space rather than each
+ * claiming their own slice of it.
+ */
+.hero__layer {
   position: absolute;
-  top: 16%;
-  left: var(--gutter);
+  inset: 0;
   z-index: 7;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* A floor on the separation: space-between alone lets the two ends drift to
+     within a few pixels of each other on a short viewport. */
+  gap: clamp(24px, 4vh, 56px);
+  padding: clamp(70px, 16vh, 180px) var(--gutter) clamp(56px, 9vh, 110px);
+  pointer-events: none;
+}
+
+.hero__layer > * {
+  pointer-events: auto;
+}
+
+.hero__headline {
   max-width: min(70%, 900px);
 }
 
 .hero__headline h1 {
   font-weight: 700;
-  font-size: clamp(58px, 11.5vw, 184px);
+  font-size: clamp(58px, min(11.5vw, 21vh), 184px);
   line-height: 0.86;
   letter-spacing: -0.045em;
   text-transform: lowercase;
@@ -492,10 +515,6 @@ const onNotify = () => {
 }
 
 .hero__intro {
-  position: absolute;
-  left: var(--gutter);
-  bottom: clamp(56px, 9vh, 110px);
-  z-index: 7;
   max-width: 440px;
 }
 
