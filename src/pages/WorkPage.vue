@@ -1,158 +1,230 @@
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue'
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import SiteNav from '../components/SiteNav.vue'
+import SiteFooter from '../components/SiteFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { getCategories, getPage, getPhotos } from '../lib/api'
-import { useContent, useContentFor } from '../composables/useContent'
+import { useContent } from '../composables/useContent'
 
-const grid = ref(null)
-// null is the "All" pill — the API filters server-side when a slug is set.
-const cat = ref(null)
-const lightboxPos = ref(null)
+gsap.registerPlugin(ScrollTrigger)
+
+const root = ref(null)
 
 const { data: page } = useContent(getPage.bind(null, 'work'))
 const { data: categories } = useContent(() => getCategories('work'), { initial: [] })
-const { data: photos, pending, error, reload } = useContentFor(cat, getPhotos, { initial: [] })
-
-const visible = computed(() => photos.value ?? [])
-
-// The opening frame is the page; everything after it is the stream. Indices stay
-// relative to `visible` so the lightbox can still walk the whole set.
-const opener = computed(() => visible.value[0] ?? null)
-const stream = computed(() => visible.value.slice(1))
-
-/**
- * Ratios arrive as CSS-ish strings ("21/9", "4/5"). Anything wider than about
- * 2:1 is a panorama and earns the full width of the screen; the rest are held
- * in a centred column so the page keeps a rhythm instead of becoming a wall.
- */
-const ratioOf = (photo) => {
-  const [w, h] = String(photo?.ratio ?? '3/2').split('/').map(Number)
-  return h ? w / h : 1.5
-}
-const isPanoramic = (photo) => ratioOf(photo) >= 1.9
-
-const openAt = (i) => (lightboxPos.value = i)
-const closeLightbox = () => (lightboxPos.value = null)
-const step = (delta) => {
-  const n = visible.value.length
-  lightboxPos.value = (lightboxPos.value + delta + n) % n
-}
-
-const scrollToStream = () => {
-  grid.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-// Re-stagger the surviving frames whenever a new set arrives.
-watch(photos, async () => {
-  closeLightbox()
-  await nextTick()
-  const frames = grid.value?.querySelectorAll('[data-frame]')
-  if (!frames?.length) return
-  gsap.fromTo(
-    frames,
-    { opacity: 0, y: 28 },
-    { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.05 },
-  )
+// The whole archive arrives once and is filtered here. Nineteen photographs is
+// nothing to sort in the browser, and it saves a request per category click.
+const { data: photos, error, reload } = useContent((locale) => getPhotos(null, locale), {
+  initial: [],
 })
+
+const all = computed(() => photos.value ?? [])
+const shot = (photo) => photo.images?.full ?? photo.images?.preview
+const withImages = computed(() => all.value.filter(shot))
+
+// Two frames carry the parallax. Untiled photographs would parallax a grey
+// placeholder, so anything with a file wins the slot.
+const parallaxShots = computed(() =>
+  (withImages.value.length ? withImages.value : all.value).slice(0, 2),
+)
+
+// Deep-zoom tiles are generated per photograph and most have not been through
+// it yet; the slide falls back so the section is never empty.
+const zoomables = computed(() => {
+  const tiled = all.value.filter((photo) => photo.is_zoomable)
+  return tiled.length ? tiled : withImages.value.slice(0, 3)
+})
+
+const slide = ref(0)
+const current = computed(() => zoomables.value[slide.value] ?? null)
+const stepSlide = (delta) => {
+  const n = zoomables.value.length
+  if (n) slide.value = (slide.value + delta + n) % n
+}
+
+const photosIn = (slug) => all.value.filter((photo) => photo.category?.slug === slug)
+
+/* The lightbox is handed an explicit set rather than reading a filter, so a
+   category and the gigapixel slide can each open their own run of frames. */
+const lbItems = ref([])
+const lbPos = ref(null)
+const openLightbox = (items, i = 0) => {
+  if (!items.length) return
+  lbItems.value = items
+  lbPos.value = i
+}
+const closeLightbox = () => (lbPos.value = null)
+const stepLightbox = (delta) => {
+  const n = lbItems.value.length
+  lbPos.value = (lbPos.value + delta + n) % n
+}
+
+let ctx
+watch(
+  parallaxShots,
+  async (list) => {
+    ctx?.revert()
+    ctx = null
+    if (!list.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    await nextTick()
+    if (!root.value) return
+
+    ctx = gsap.context(() => {
+      root.value.querySelectorAll('[data-para]').forEach((panel) => {
+        // The image is taller than the frame that crops it, and that overhang is
+        // what it travels through as the page scrolls.
+        gsap.fromTo(
+          panel.querySelector('[data-para-img]'),
+          { yPercent: -8 },
+          {
+            yPercent: 8,
+            ease: 'none',
+            scrollTrigger: { trigger: panel, start: 'top bottom', end: 'bottom top', scrub: 0.5 },
+          },
+        )
+      })
+
+      root.value.querySelectorAll('[data-cat]').forEach((tile, i) => {
+        gsap.from(tile, {
+          y: 40,
+          opacity: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          delay: (i % 4) * 0.06,
+          scrollTrigger: { trigger: tile, start: 'top 90%' },
+        })
+      })
+
+      ScrollTrigger.refresh()
+    }, root.value)
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => ctx?.revert())
 </script>
 
 <template>
-  <div class="work">
+  <div ref="root" class="work">
     <SiteNav absolute />
-
-    <!-- OPENING FRAME -->
-    <section v-if="opener" class="stage">
-      <div class="stage__img">
-        <ImageSlot
-          :src="opener.images?.full ?? opener.images?.preview"
-          :alt="opener.alt"
-          :placeholder="opener.title"
-          fit="cover"
-        />
-      </div>
-      <div class="stage__scrim" />
-
-      <div class="stage__copy">
-        <span class="eyebrow stage__eyebrow">{{ page?.eyebrow }}</span>
-        <h1 class="stage__title">{{ page?.title }}</h1>
-      </div>
-
-      <button type="button" class="stage__cue" aria-label="Scroll to the work" @click="scrollToStream">
-        <span class="stage__chev">&#8964;</span>
-      </button>
-    </section>
-
-    <!-- A page with no opener still needs a heading. -->
-    <header v-else class="stage stage--bare">
-      <span class="eyebrow stage__eyebrow">{{ page?.eyebrow }}</span>
-      <h1 class="stage__title">{{ page?.title }}</h1>
-    </header>
-
-    <!-- FILTERS -->
-    <div class="filters">
-      <button :class="['filter', { 'filter--on': cat === null }]" @click="cat = null">
-        {{ $t('work.all') }}
-      </button>
-      <button
-        v-for="c in categories"
-        :key="c.slug"
-        :class="['filter', { 'filter--on': c.slug === cat }]"
-        @click="cat = c.slug"
-      >
-        {{ c.name }}
-      </button>
-    </div>
 
     <p v-if="error" class="work__state mono">
       {{ error }}
-      <button type="button" class="work__retry" @click="reload(cat)">{{ $t('common.retry') }}</button>
+      <button type="button" class="work__retry" @click="reload()">{{ $t('common.retry') }}</button>
     </p>
 
-    <!-- STREAM -->
-    <main v-else ref="grid" :class="['stream', { 'stream--pending': pending }]">
-      <figure
-        v-for="(item, i) in stream"
-        :key="item.slug"
-        data-frame
-        :class="['frame', { 'frame--wide': isPanoramic(item) }]"
-        role="button"
-        tabindex="0"
-        :aria-label="`Open ${item.title}`"
-        @click="openAt(i + 1)"
-        @keydown.enter="openAt(i + 1)"
-        @keydown.space.prevent="openAt(i + 1)"
-      >
-        <div class="frame__img" :style="{ aspectRatio: item.ratio }">
-          <ImageSlot
-            :src="item.images?.full ?? item.images?.preview"
-            :alt="item.alt"
-            :placeholder="`${item.category?.name ?? ''} · ${item.title}`"
-            fit="cover"
-          />
+    <!-- PARALLAX -->
+    <section
+      v-for="(photo, i) in parallaxShots"
+      :key="photo.slug"
+      data-para
+      :class="['para', { 'para--lead': i === 0 }]"
+    >
+      <div data-para-img class="para__img">
+        <ImageSlot :src="shot(photo)" :alt="photo.alt" :placeholder="photo.title" fit="cover" />
+      </div>
+      <div class="para__scrim" />
+
+      <div v-if="i === 0" class="para__copy">
+        <span class="eyebrow para__eyebrow">{{ page?.eyebrow }}</span>
+        <h1 class="para__title">{{ page?.title }}</h1>
+      </div>
+      <div v-else class="para__cap mono">{{ photo.title }}</div>
+    </section>
+
+    <!-- CATEGORY GRID -->
+    <section id="galleries" class="section section--rule">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">{{ $t('work.galleriesEyebrow') }}</span>
+            <h2 class="display">{{ $t('work.galleriesHeading') }}</h2>
+          </div>
         </div>
 
-        <span v-if="item.is_zoomable" class="frame__zoom mono">{{ $t('work.zoom') }}</span>
+        <div class="cats">
+          <button
+            v-for="(c, i) in categories"
+            :key="c.slug"
+            data-cat
+            type="button"
+            class="cat"
+            :style="{
+              gridColumn: `span ${c.grid_span ?? 4}`,
+              aspectRatio: c.grid_ratio ?? '4 / 3',
+            }"
+            :aria-label="`Open ${c.name}`"
+            @click="openLightbox(photosIn(c.slug))"
+          >
+            <div class="cat__img">
+              <ImageSlot
+                :src="c.images?.preview"
+                :alt="c.name"
+                :placeholder="c.name"
+                fit="cover"
+              />
+            </div>
+            <div class="cat__scrim" />
+            <div class="cat__meta">
+              <div>
+                <span class="cat__n mono">{{ String(i + 1).padStart(2, '0') }}</span>
+                <div class="cat__name">{{ c.name }}</div>
+              </div>
+              <span class="cat__count mono">
+                {{ $t('home.frames', { count: c.photos_count ?? 0 }) }}
+              </span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </section>
 
-        <figcaption class="frame__cap">
-          <span class="frame__n mono">{{ String(i + 1).padStart(2, '0') }}</span>
-          <span class="frame__name">{{ item.title }}</span>
-          <span class="frame__meta mono">
-            {{ item.category?.name }}
-            <template v-if="item.location">&nbsp;&middot;&nbsp;{{ item.location }}</template>
-          </span>
-        </figcaption>
-      </figure>
-    </main>
+    <!-- GIGAPIXEL SLIDE -->
+    <section v-if="current" class="slide">
+      <div class="slide__img">
+        <ImageSlot :src="shot(current)" :alt="current.alt" :placeholder="current.title" fit="cover" />
+      </div>
+      <div class="slide__scrim" />
+
+      <div class="slide__copy">
+        <span class="eyebrow slide__eyebrow">{{ $t('home.gigapixelEyebrow') }}</span>
+        <h2 class="slide__title">{{ $t('home.gigapixelHeading') }}</h2>
+        <p class="slide__body">{{ $t('home.gigapixelBody') }}</p>
+
+        <button
+          type="button"
+          class="btn btn--solid slide__cta"
+          @click="openLightbox(zoomables, slide)"
+        >
+          {{ current.is_zoomable ? $t('home.gigapixelCta') : $t('work.zoom') }}
+        </button>
+      </div>
+
+      <div v-if="zoomables.length > 1" class="slide__nav">
+        <button type="button" class="slide__step" aria-label="Previous" @click="stepSlide(-1)">
+          &larr;
+        </button>
+        <span class="mono slide__counter">
+          {{ String(slide + 1).padStart(2, '0') }} / {{ String(zoomables.length).padStart(2, '0') }}
+        </span>
+        <button type="button" class="slide__step" aria-label="Next" @click="stepSlide(1)">
+          &rarr;
+        </button>
+      </div>
+    </section>
+
+    <SiteFooter />
 
     <WorkLightbox
-      v-if="lightboxPos !== null"
-      :items="visible"
-      :position="lightboxPos"
+      v-if="lbPos !== null"
+      :items="lbItems"
+      :position="lbPos"
       @close="closeLightbox"
-      @step="step"
+      @step="stepLightbox"
     />
   </div>
 </template>
@@ -177,47 +249,56 @@ watch(photos, async () => {
   color: inherit;
 }
 
-/* ---------- opening frame ---------- */
+/* ---------- parallax ---------- */
 
-.stage {
+.para {
   position: relative;
-  height: 100svh;
-  min-height: 520px;
+  height: 74svh;
+  min-height: 420px;
   overflow: hidden;
 }
 
-.stage__img {
-  position: absolute;
-  inset: 0;
+.para--lead {
+  height: 100svh;
+  min-height: 520px;
 }
 
-.stage__scrim {
+/* Taller than the frame on both edges: that overhang is the travel. */
+.para__img {
+  position: absolute;
+  inset: -11% 0;
+  will-change: transform;
+}
+
+.para__scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(11, 12, 14, 0.72) 0%, rgba(11, 12, 14, 0.12) 34%, rgba(11, 12, 14, 0.86) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(11, 12, 14, 0.7) 0%,
+    rgba(11, 12, 14, 0.1) 36%,
+    rgba(11, 12, 14, 0.8) 100%
+  );
 }
 
-.stage__copy {
+.para__copy {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: clamp(90px, 14vh, 170px);
+  bottom: clamp(60px, 11vh, 130px);
   z-index: 2;
   padding: 0 var(--gutter);
   text-align: center;
 }
 
-.stage__eyebrow {
+.para__eyebrow {
   display: block;
   margin-bottom: 16px;
 }
 
-.stage__title {
+.para__title {
   font-weight: 700;
-  /* Deliberately set to fill the width: the title is part of the image here,
-     not a label sitting above it. */
   font-size: clamp(38px, 9.5vw, 168px);
   line-height: 0.9;
   letter-spacing: -0.03em;
@@ -225,193 +306,203 @@ watch(photos, async () => {
   text-wrap: balance;
 }
 
-.stage__cue {
+.para__cap {
   position: absolute;
-  left: 50%;
-  bottom: clamp(28px, 5vh, 56px);
-  z-index: 3;
-  transform: translateX(-50%);
-  padding: 10px 18px;
-  border: none;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-  opacity: 0.75;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.stage__cue:hover {
-  opacity: 1;
-  transform: translateX(-50%) translateY(3px);
-}
-
-.stage__chev {
-  display: block;
-  font-size: 26px;
-  line-height: 1;
-  animation: gs-cue 2.4s ease-in-out infinite;
-}
-
-@keyframes gs-cue {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(6px);
-  }
-}
-
-.stage--bare {
-  height: auto;
-  min-height: 0;
-  padding: clamp(150px, 20vh, 240px) var(--gutter) clamp(30px, 4vw, 50px);
-  text-align: start;
-}
-
-/* ---------- filters ---------- */
-
-.filters {
-  position: sticky;
-  top: 0;
-  z-index: 12;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  padding: clamp(18px, 2.4vw, 28px) var(--gutter);
-  background: linear-gradient(180deg, rgba(11, 12, 14, 0.92), rgba(11, 12, 14, 0));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.filter {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  left: var(--gutter);
+  bottom: clamp(20px, 3vw, 34px);
+  z-index: 2;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 9px 16px;
-  border: 1px solid var(--line);
-  border-radius: 100px;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-  transition: all 0.3s ease;
+  opacity: 0.7;
 }
 
-.filter:hover {
-  border-color: var(--line-strong);
+/* ---------- category grid ---------- */
+
+.cats {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(14px, 1.6vw, 22px);
 }
 
-.filter--on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg);
-}
-
-/* ---------- stream ---------- */
-
-.stream {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(60px, 9vw, 150px);
-  padding: clamp(30px, 5vw, 70px) 0 clamp(80px, 11vw, 170px);
-}
-
-.stream--pending {
-  opacity: 0.45;
-  transition: opacity 0.2s ease;
-}
-
-.frame {
+.cat {
   position: relative;
-  width: min(1180px, calc(100% - 2 * var(--gutter)));
-  margin: 0;
-  cursor: pointer;
-}
-
-/* Panoramas are the reason this page exists — they get the whole screen. */
-.frame--wide {
-  width: 100%;
-}
-
-.frame__img {
-  position: relative;
+  display: block;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
   overflow: hidden;
-  max-height: 88svh;
   background: var(--panel);
+  color: inherit;
+  cursor: pointer;
+}
+
+.cat__img {
+  position: absolute;
+  inset: 0;
   transition: transform 1.1s cubic-bezier(0.2, 0, 0.1, 1);
 }
 
-.frame:not(.frame--wide) .frame__img {
-  border-radius: 4px;
+.cat:hover .cat__img,
+.cat:focus-visible .cat__img {
+  transform: scale(1.06);
 }
 
-.frame:hover .frame__img,
-.frame:focus-visible .frame__img {
-  transform: scale(1.012);
-}
-
-.frame__zoom {
+.cat__scrim {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 3;
-  padding: 7px 13px;
-  border-radius: 100px;
-  background: rgba(11, 12, 14, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(246, 139, 43, 0.5);
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
+  inset: 0;
   pointer-events: none;
+  background: linear-gradient(180deg, rgba(11, 12, 14, 0.1) 40%, rgba(11, 12, 14, 0.78) 100%);
 }
 
-/* The caption sits under the frame rather than over it: an overlay competes
-   with the photograph, which is the opposite of the point. */
-.frame__cap {
+.cat__meta {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 20px;
   display: flex;
-  align-items: baseline;
-  gap: 14px;
-  padding: 16px var(--gutter) 0;
-  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 2;
+  text-align: start;
 }
 
-.frame--wide .frame__cap {
-  justify-content: center;
-}
-
-.frame__n {
+.cat__n {
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--accent);
 }
 
-.frame__name {
-  font-size: clamp(15px, 1.4vw, 19px);
+.cat__name {
+  font-size: clamp(20px, 2.2vw, 30px);
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
 }
 
-.frame__meta {
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.55;
+.cat__count {
+  font-size: 11px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .cats {
+    grid-template-columns: 1fr;
+  }
+
+  .cat {
+    grid-column: 1 / -1 !important;
+    aspect-ratio: 4 / 3 !important;
+  }
+}
+
+/* ---------- gigapixel slide ---------- */
+
+.slide {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.slide__img {
+  position: absolute;
+  inset: 0;
+}
+
+.slide__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(11, 12, 14, 0.92) 0%,
+    rgba(11, 12, 14, 0.55) 46%,
+    rgba(11, 12, 14, 0.15) 100%
+  );
+}
+
+.slide__copy {
+  position: relative;
+  z-index: 2;
+  max-width: min(520px, 78vw);
+  padding: 0 var(--gutter);
+}
+
+.slide__eyebrow {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.slide__title {
+  font-size: clamp(34px, 5vw, 68px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+.slide__body {
+  margin-top: 18px;
+  font-size: clamp(14px, 1.3vw, 17px);
+  line-height: 1.6;
+  font-weight: 300;
+  opacity: 0.82;
+}
+
+.slide__cta {
+  margin-top: 30px;
+}
+
+.slide__nav {
+  position: absolute;
+  right: var(--gutter);
+  bottom: clamp(28px, 5vh, 54px);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.slide__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(11, 12, 14, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--ink);
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.slide__step:hover {
+  border-color: var(--line-strong);
+  background: rgba(11, 12, 14, 0.75);
+}
+
+.slide__counter {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  opacity: 0.7;
 }
 
 @media (max-width: 720px) {
-  .frame,
-  .frame--wide {
-    width: 100%;
+  .slide__scrim {
+    background: linear-gradient(180deg, rgba(11, 12, 14, 0.5) 0%, rgba(11, 12, 14, 0.92) 62%);
   }
 
-  .frame__img {
-    border-radius: 0;
+  .slide {
+    align-items: flex-end;
+    padding-bottom: clamp(90px, 16vh, 140px);
   }
 }
 </style>

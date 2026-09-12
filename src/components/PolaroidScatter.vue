@@ -8,102 +8,101 @@ gsap.registerPlugin(ScrollTrigger)
 
 const props = defineProps({
   photos: { type: Array, default: () => [] },
-  // Shifts the scatter pattern so two bands on the same page don't rhyme.
-  seed: { type: Number, default: 0 },
-  limit: { type: Number, default: 6 },
+  // How far down the page the scatter starts and stops, in percent, so the
+  // polaroids never collide with a hero or a footer.
+  from: { type: Number, default: 14 },
+  to: { type: Number, default: 88 },
 })
 
-const band = ref(null)
+const layer = ref(null)
 let ctx
 
 /**
- * The scatter is derived from the index rather than Math.random so a re-render
- * never reshuffles the band under the reader, and so the layout is identical
- * between the server-rendered markup and the client.
- *
- * `depth` drives both the parallax distance and the stacking order: the further
- * a polaroid travels, the closer to the front it sits.
+ * Positions are derived from the index rather than Math.random so the scatter
+ * is stable across re-renders, and alternate sides down the page. Everything
+ * sits in the margins and hangs slightly off the edge — the page is the
+ * subject, these are the things pinned around it.
  */
-const scattered = computed(() =>
-  props.photos.slice(0, props.limit).map((photo, i) => {
-    const n = i + props.seed
-    return {
-      photo,
-      rotate: [-7, 5, -3, 8, -5, 3, -8, 6][n % 8],
-      drop: [0, 34, 12, 48, 6, 28][n % 6],
-      depth: [1, 0.55, 0.85, 0.4, 1, 0.7][n % 6],
-      width: [1, 0.86, 0.94, 0.8, 1, 0.9][n % 6],
-    }
-  }),
-)
+const placed = computed(() => {
+  const list = props.photos.slice(0, 10)
+  if (!list.length) return []
 
-/**
- * Set up on the photos arriving rather than on mount: the band is behind a
- * v-if, so at mount time there is no element to attach a trigger to and the
- * whole effect silently does nothing.
- */
-watch(scattered, async (list) => {
-  ctx?.revert()
-  ctx = null
-  if (!list.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const span = props.to - props.from
+  const gap = list.length > 1 ? span / (list.length - 1) : 0
 
-  await nextTick()
-  const el = band.value
-  if (!el) return
+  return list.map((photo, i) => ({
+    photo,
+    side: i % 2 === 0 ? 'left' : 'right',
+    // Nudge each one off its even slot so the two columns do not line up.
+    top: props.from + gap * i + [0, -3.2, 2.4, -1.6, 3][i % 5],
+    nudge: [0, -20, -38, -9, -28][i % 5],
+    rotate: [-9, 7, -4, 11, -7, 5, -12, 8, -3, 6][i % 10],
+    scale: [1, 0.82, 0.92, 0.76, 0.88][i % 5],
+    depth: [1, 0.5, 0.8, 0.35, 0.65][i % 5],
+  }))
+})
 
-  ctx = gsap.context(() => {
-    el.querySelectorAll('[data-polaroid]').forEach((card) => {
-      const depth = Number(card.dataset.depth)
+watch(
+  placed,
+  async (list) => {
+    ctx?.revert()
+    ctx = null
+    if (!list.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-      // The drift and the reveal are put on different elements on purpose: two
-      // tweens writing a transform on one node overwrite each other, and the
-      // drift is the one that silently loses.
-      gsap.fromTo(
-        card,
-        { yPercent: 6 * depth },
-        {
-          yPercent: -16 * depth,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 0.6,
+    await nextTick()
+    const el = layer.value
+    if (!el) return
+
+    ctx = gsap.context(() => {
+      el.querySelectorAll('[data-polaroid]').forEach((card) => {
+        const depth = Number(card.dataset.depth)
+
+        // The drift and the reveal are put on different elements on purpose:
+        // two tweens writing a transform on one node overwrite each other, and
+        // the drift is the one that silently loses.
+        gsap.fromTo(
+          card,
+          { yPercent: 16 * depth },
+          {
+            yPercent: -22 * depth,
+            ease: 'none',
+            scrollTrigger: { trigger: card, start: 'top bottom', end: 'bottom top', scrub: 0.6 },
           },
-        },
-      )
+        )
 
-      gsap.from(card.querySelector('[data-polaroid-inner]'), {
-        y: 60,
-        opacity: 0,
-        duration: 1,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: card, start: 'top 94%' },
+        gsap.from(card.querySelector('[data-polaroid-inner]'), {
+          y: 50,
+          opacity: 0,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: card, start: 'top 96%' },
+        })
       })
-    })
 
-    // Images land after the triggers are built and change the page height, so
-    // the start/end positions have to be recomputed once they do.
-    ScrollTrigger.refresh()
-  }, el)
-}, { immediate: true })
+      // Images land after the triggers are built and change the page height, so
+      // the start/end positions have to be recomputed once they do.
+      ScrollTrigger.refresh()
+    }, el)
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => ctx?.revert())
 </script>
 
 <template>
-  <div v-if="scattered.length" ref="band" class="band" aria-hidden="true">
+  <div v-if="placed.length" ref="layer" class="scatter" aria-hidden="true">
     <figure
-      v-for="(item, i) in scattered"
+      v-for="(item, i) in placed"
       :key="item.photo.slug ?? i"
       data-polaroid
       :data-depth="item.depth"
-      class="pola"
+      :class="['pola', `pola--${item.side}`]"
       :style="{
+        top: `${item.top}%`,
+        '--nudge': `${item.nudge}px`,
         '--rotate': `${item.rotate}deg`,
-        '--drop': `${item.drop}px`,
-        '--scale': item.width,
-        zIndex: Math.round(item.depth * 10),
+        '--scale': item.scale,
       }"
     >
       <div data-polaroid-inner class="pola__inner">
@@ -121,42 +120,43 @@ onBeforeUnmount(() => ctx?.revert())
 </template>
 
 <style scoped>
-.band {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: clamp(30px, 5vw, 70px) 0 clamp(50px, 7vw, 100px);
-  perspective: 900px;
+.scatter {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Cards hang off both edges; without this they widen the document and the
+     whole page gains a horizontal scrollbar. */
+  overflow: hidden;
+
+  /* Where the text column actually starts: the page is centred at --maxw but
+     never closer to the edge than --gutter, so the margin is whichever of those
+     is larger. Anchoring to this rather than to the viewport is what keeps a
+     polaroid from ever ending up behind a paragraph — on a narrow screen they
+     slide off-frame instead of onto the text. */
+  --edge: max(calc((100vw - var(--maxw)) / 2), var(--gutter));
 }
 
 .pola {
-  flex: 0 0 auto;
-  width: calc(clamp(130px, 15vw, 230px) * var(--scale));
-  margin-top: var(--drop);
-  /* flexbox rejects a negative gap, so the overlap is a pull on each sibling;
-     the rotations then break up the seam. */
-  margin-inline-start: clamp(-42px, -3vw, -16px);
+  position: absolute;
+  width: calc(clamp(108px, 11vw, 186px) * var(--scale));
+  margin: 0;
+}
+
+.pola--left {
+  right: calc(100% - var(--edge) - var(--nudge) + 10px);
+}
+
+.pola--right {
+  left: calc(100% - var(--edge) - var(--nudge) + 10px);
 }
 
 .pola__inner {
-  padding: 9px 9px 34px;
+  padding: 8px 8px 30px;
   border-radius: 2px;
   background: #f4f2ec;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 2px 5px rgba(0, 0, 0, 0.34);
   transform: rotate(var(--rotate));
-  transition: transform 0.6s cubic-bezier(0.2, 0, 0.1, 1);
-}
-
-.pola:first-child {
-  margin-inline-start: 0;
-}
-
-.pola:hover {
-  z-index: 20;
-}
-
-.pola:hover .pola__inner {
-  transform: rotate(0deg) translateY(-6px);
 }
 
 .pola__img {
@@ -166,21 +166,11 @@ onBeforeUnmount(() => ctx?.revert())
   background: #d9d6cd;
 }
 
-/* The band is decorative; below the fold of a phone it becomes a cramped row,
-   so the deepest few drop out rather than shrinking to thumbnails. */
-@media (max-width: 900px) {
-  .pola:nth-child(n + 5) {
+/* The margins that make this work do not exist on a narrow screen — the cards
+   would sit on top of the text instead of beside it. */
+@media (max-width: 1100px) {
+  .scatter {
     display: none;
-  }
-}
-
-@media (max-width: 560px) {
-  .pola:nth-child(n + 4) {
-    display: none;
-  }
-
-  .pola__inner {
-    padding: 7px 7px 26px;
   }
 }
 </style>

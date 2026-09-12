@@ -17,10 +17,8 @@ const { data: about, pending, error } = useContent(getAbout)
 // positioned explicitly rather than sliding into the filter argument.
 const { data: photos } = useContent((locale) => getPhotos(null, locale), { initial: [] })
 
-// Two bands, drawn from opposite ends of the archive so the same frame never
-// shows up twice on the page.
-const bandOne = computed(() => (photos.value ?? []).slice(0, 6))
-const bandTwo = computed(() => (photos.value ?? []).slice(6, 12))
+// Pinned down both margins for the length of the page.
+const scatter = computed(() => (photos.value ?? []).slice(0, 10))
 
 // The intro is the only field that needs inline emphasis. Escaping first keeps
 // dashboard input from injecting markup beyond the <strong> we add ourselves.
@@ -38,6 +36,8 @@ const emphasise = (text) => {
 
 <template>
   <div ref="root" class="about">
+    <PolaroidScatter :photos="scatter" />
+
     <SiteNav absolute />
 
     <p v-if="error" class="about__state mono">{{ error }}</p>
@@ -99,8 +99,6 @@ const emphasise = (text) => {
       </div>
     </section>
 
-    <PolaroidScatter :photos="bandOne" :seed="0" />
-
     <!-- PHILOSOPHY -->
     <section class="section section--rule philosophy">
       <span data-fade class="eyebrow">{{ $t('about.philosophy') }}</span>
@@ -121,8 +119,6 @@ const emphasise = (text) => {
         </div>
       </div>
     </section>
-
-    <PolaroidScatter :photos="bandTwo" :seed="3" />
 
     <!-- GEAR -->
     <section class="section section--rule">
@@ -167,6 +163,20 @@ const emphasise = (text) => {
 .about {
   position: relative;
   min-height: 100vh;
+  /* Narrower than the site default on purpose. This is the one page that is
+     mostly prose, so a shorter measure reads better — and it is what creates
+     the margins the polaroids are pinned into. At the site-wide 1360px there
+     is about 58px of edge on a 1440 screen, which is not a margin. */
+  --maxw: 1180px;
+}
+
+/* The scatter is an absolute layer behind the page, so the content bands need
+   a stacking context of their own or the polaroids sit on top of the text. */
+.about > section,
+.about > header,
+.about :deep(.site-nav) {
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- hero ---------- */
