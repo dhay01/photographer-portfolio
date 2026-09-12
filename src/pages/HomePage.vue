@@ -452,7 +452,12 @@ const onNotify = () => {
 
 .hero__headline h1 {
   font-weight: 700;
-  font-size: clamp(58px, 11.5vw, 184px);
+  /* Bounded by height as well as width. Sized off viewport width alone, the
+     name grew while the frame that has to hold it shrank, and on a short window
+     the tagline ended up on top of the intro paragraph. The 14vh term is what
+     keeps the headline block inside the space between the frame's top inset and
+     the intro pinned to its bottom. */
+  font-size: clamp(46px, min(9vw, 14vh), 152px);
   line-height: 0.86;
   letter-spacing: -0.045em;
   text-transform: lowercase;
