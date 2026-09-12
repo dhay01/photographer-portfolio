@@ -30,8 +30,8 @@ const ratioOf = (photo) => {
   return h ? w / h : 1.5
 }
 
-// The opening frame, then a run of photographs shown at full width with no
-// chrome on them at all. Untiled photographs would scroll a grey placeholder,
+// The opening frame plus two more — three photographs in the run, shown at
+// full width with no chrome on them at all. Untiled photographs would scroll a grey placeholder,
 // so anything with a file wins a slot, and the widest go first — they are what
 // the full width is for.
 const opener = computed(() => withImages.value[0] ?? all.value[0] ?? null)
@@ -42,8 +42,8 @@ const panoramas = computed(() => {
   // One panorama is not a run. Until more frames are tiled and uploaded, fall
   // back to the widest of whatever else is there rather than showing a single
   // band and calling it a section.
-  if (wide.length >= 2) return wide.slice(0, 3)
-  return [...pool].sort((a, b) => ratioOf(b) - ratioOf(a)).slice(0, 3)
+  if (wide.length >= 2) return wide.slice(0, 2)
+  return [...pool].sort((a, b) => ratioOf(b) - ratioOf(a)).slice(0, 2)
 })
 
 const parallaxShots = computed(() => (opener.value ? [opener.value, ...panoramas.value] : []))
