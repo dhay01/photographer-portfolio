@@ -380,9 +380,14 @@ const emphasise = (text) => {
 
 .philosophy {
   padding-block: clamp(70px, 10vw, 150px);
-  max-width: 1200px;
-  margin: 0 auto;
   text-align: center;
+}
+
+/* The cap belongs on the contents, not on the band: the band carries the
+   section inset as padding and the rule line above it spans the full width. */
+.philosophy > * {
+  max-width: 1200px;
+  margin-inline: auto;
 }
 
 .philosophy__quote {

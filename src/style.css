@@ -35,6 +35,11 @@
      that narrow --maxw (About, for its margins) would otherwise drag the shared
      nav and footer inwards with them, so those chrome elements would visibly
      jump as you moved between pages. */
+  /* Placing a box on this edge: use MARGIN, never padding, on anything that
+     also caps its own width. box-sizing is border-box, so padding comes out of
+     the declared width — the inset then silently crushes the contents instead
+     of moving the box, and a 520px column becomes 80px of one-word lines. A
+     full-width band has no width to lose and can pad freely. */
   --site-gutter: max(clamp(24px, 4vw, 96px), calc((100vw - clamp(1360px, 78vw, 1920px)) / 2));
 
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;

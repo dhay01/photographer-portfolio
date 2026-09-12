@@ -450,8 +450,9 @@ onBeforeUnmount(() => ctx?.revert())
 .slide__copy {
   position: relative;
   z-index: 2;
-  max-width: min(520px, 78vw);
-  padding: 0 var(--gutter);
+  /* Margin, not padding — see the note on --gutter in style.css. */
+  width: min(520px, calc(100% - 2 * var(--gutter)));
+  margin-inline-start: var(--gutter);
 }
 
 .slide__eyebrow {
