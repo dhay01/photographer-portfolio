@@ -167,8 +167,7 @@ const emphasise = (text) => {
      mostly prose, so a shorter measure reads better — and it is what creates
      the margins the polaroids are pinned into. At the site-wide 1360px there
      is about 58px of edge on a 1440 screen, which is not a margin. */
-  --maxw: clamp(1180px, 64vw, 1560px);
-  --gutter: max(clamp(24px, 4vw, 96px), calc((100vw - var(--maxw)) / 2));
+  --maxw: 1180px;
 }
 
 /* The scatter is an absolute layer behind the page, so the content bands need
@@ -380,14 +379,9 @@ const emphasise = (text) => {
 
 .philosophy {
   padding-block: clamp(70px, 10vw, 150px);
-  text-align: center;
-}
-
-/* The cap belongs on the contents, not on the band: the band carries the
-   section inset as padding and the rule line above it spans the full width. */
-.philosophy > * {
   max-width: 1200px;
-  margin-inline: auto;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .philosophy__quote {

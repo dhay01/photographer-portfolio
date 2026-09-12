@@ -30,7 +30,7 @@ defineProps({
 <style scoped>
 .mini-footer {
   border-top: 1px solid var(--line);
-  padding: 36px var(--site-gutter);
+  padding: 36px var(--gutter);
   display: flex;
   flex-wrap: wrap;
   gap: 16px;

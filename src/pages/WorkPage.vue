@@ -310,7 +310,7 @@ onBeforeUnmount(() => ctx?.revert())
 
 .para__title {
   font-weight: 700;
-  font-size: clamp(38px, 9.5vw, 220px);
+  font-size: clamp(38px, 9.5vw, 168px);
   line-height: 0.9;
   letter-spacing: -0.03em;
   text-transform: uppercase;
@@ -346,7 +346,7 @@ onBeforeUnmount(() => ctx?.revert())
 }
 
 .collections__title {
-  font-size: clamp(40px, 6.5vw, 120px);
+  font-size: clamp(40px, 6.5vw, 92px);
   font-weight: 700;
   line-height: 0.95;
   letter-spacing: -0.035em;
@@ -450,9 +450,8 @@ onBeforeUnmount(() => ctx?.revert())
 .slide__copy {
   position: relative;
   z-index: 2;
-  /* Margin, not padding — see the note on --gutter in style.css. */
-  width: min(520px, calc(100% - 2 * var(--gutter)));
-  margin-inline-start: var(--gutter);
+  max-width: min(520px, 78vw);
+  padding: 0 var(--gutter);
 }
 
 .slide__eyebrow {

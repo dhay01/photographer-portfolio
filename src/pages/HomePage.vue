@@ -433,33 +433,26 @@ const onNotify = () => {
 .hero {
   position: relative;
   width: 100%;
-  /* The hero is held inside a thin frame — that is what the corner brackets sit
-     on. Everything positioned inside the stage therefore has to subtract the
-     frame to end up on the site's own left edge rather than 34px inside it. */
-  --frame: clamp(16px, 2.2vw, 34px);
-  --hero-inset: calc(var(--gutter) - var(--frame));
-  padding: 0 var(--frame);
+  padding: 0 clamp(16px, 2.2vw, 34px);
 }
 
 .hero__stage {
   position: relative;
-  /* The cap used to be 1040px, so on a 1440-tall screen the hero stopped at
-     72% of the viewport and left a band of background under it. */
-  height: clamp(600px, 92vh, 1280px);
+  height: clamp(600px, 92vh, 1040px);
   padding-top: 96px;
 }
 
 .hero__headline {
   position: absolute;
   top: 16%;
-  left: var(--hero-inset);
+  left: var(--gutter);
   z-index: 7;
   max-width: min(70%, 900px);
 }
 
 .hero__headline h1 {
   font-weight: 700;
-  font-size: clamp(58px, 11.5vw, 240px);
+  font-size: clamp(58px, 11.5vw, 184px);
   line-height: 0.86;
   letter-spacing: -0.045em;
   text-transform: lowercase;
@@ -487,7 +480,7 @@ const onNotify = () => {
 .hero__micro {
   position: absolute;
   top: 112px;
-  right: var(--hero-inset);
+  right: var(--gutter);
   z-index: 7;
   text-align: right;
   font-family: var(--font-mono);
@@ -500,7 +493,7 @@ const onNotify = () => {
 
 .hero__intro {
   position: absolute;
-  left: var(--hero-inset);
+  left: var(--gutter);
   bottom: clamp(56px, 9vh, 110px);
   z-index: 7;
   max-width: 440px;

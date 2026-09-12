@@ -130,7 +130,7 @@ watch(() => route.fullPath, () => (open.value = false))
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 26px var(--site-gutter);
+  padding: 26px var(--gutter);
 }
 
 .site-nav--absolute {
@@ -253,7 +253,7 @@ watch(() => route.fullPath, () => (open.value = false))
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 18px var(--site-gutter) 26px;
+  padding: 18px var(--gutter) 26px;
   background: rgba(11, 12, 14, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
