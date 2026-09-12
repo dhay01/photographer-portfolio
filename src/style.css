@@ -6,8 +6,6 @@
 @import '@fontsource/poppins/latin-500.css';
 @import '@fontsource/poppins/latin-600.css';
 @import '@fontsource/poppins/latin-700.css';
-@import '@fontsource/space-mono/latin-400.css';
-@import '@fontsource/space-mono/latin-700.css';
 
 :root {
   --bg: #0b0c0e;
@@ -20,7 +18,10 @@
   --maxw: 1360px;
 
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Space Mono', ui-monospace, monospace;
+  /* One family across the whole site. The "mono" role is kept because it earns
+     its place typographically — tracked out, uppercase, small — but it is set
+     in Poppins like everything else. */
+  --font-mono: var(--font-sans);
 }
 
 * {
@@ -40,6 +41,16 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+/* Form controls do not inherit a family from the page, so every button without
+   an explicit font-family was falling back to the browser's Arial — including
+   the text on the gigapixel frame. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 a {
@@ -81,6 +92,7 @@ img {
 
 .mono {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .eyebrow {

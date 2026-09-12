@@ -852,8 +852,10 @@ const onNotify = () => {
 
 .shop__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(16px, 2vw, 26px);
+  /* Capped rather than stretched: three mock-ups spread across the full width
+     read as the main event, which they are not — the photography is. */
+  grid-template-columns: repeat(3, minmax(0, 300px));
+  gap: clamp(14px, 1.6vw, 20px);
 }
 
 .product {
@@ -865,7 +867,7 @@ const onNotify = () => {
 
 .product__media {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   background: var(--panel);
 }
 
@@ -908,11 +910,11 @@ const onNotify = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 11px 13px;
 }
 
 .product__title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -928,9 +930,15 @@ const onNotify = () => {
   color: var(--accent);
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1000px) {
   .shop__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 300px));
+  }
+}
+
+@media (max-width: 680px) {
+  .shop__grid {
+    grid-template-columns: minmax(0, 300px);
   }
 }
 
