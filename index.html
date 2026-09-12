@@ -5,6 +5,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>photographer-portfolio</title>
+    <!-- Every page's first paint waits on this origin; opening the socket while
+         the bundle is still parsing takes a round trip off the critical path. -->
+    <link rel="preconnect" href="%VITE_API_URL%" crossorigin />
   </head>
   <body>
     <div id="app"></div>

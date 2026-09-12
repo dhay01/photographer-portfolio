@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import SiteNav from '../components/SiteNav.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
+import PolaroidScatter from '../components/PolaroidScatter.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
-import { getAbout, getPage } from '../lib/api'
+import { getAbout, getPage, getPhotos } from '../lib/api'
 import { useContent } from '../composables/useContent'
 
 const root = ref(null)
@@ -12,6 +13,14 @@ useSiteMotion(root)
 
 const { data: page } = useContent(getPage.bind(null, 'about'))
 const { data: about, pending, error } = useContent(getAbout)
+// getPhotos takes the category first, so the locale useContent appends has to be
+// positioned explicitly rather than sliding into the filter argument.
+const { data: photos } = useContent((locale) => getPhotos(null, locale), { initial: [] })
+
+// Two bands, drawn from opposite ends of the archive so the same frame never
+// shows up twice on the page.
+const bandOne = computed(() => (photos.value ?? []).slice(0, 6))
+const bandTwo = computed(() => (photos.value ?? []).slice(6, 12))
 
 // The intro is the only field that needs inline emphasis. Escaping first keeps
 // dashboard input from injecting markup beyond the <strong> we add ourselves.
@@ -90,6 +99,8 @@ const emphasise = (text) => {
       </div>
     </section>
 
+    <PolaroidScatter :photos="bandOne" :seed="0" />
+
     <!-- PHILOSOPHY -->
     <section class="section section--rule philosophy">
       <span data-fade class="eyebrow">{{ $t('about.philosophy') }}</span>
@@ -110,6 +121,8 @@ const emphasise = (text) => {
         </div>
       </div>
     </section>
+
+    <PolaroidScatter :photos="bandTwo" :seed="3" />
 
     <!-- GEAR -->
     <section class="section section--rule">

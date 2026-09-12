@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue'
 import GrainOverlay from './components/GrainOverlay.vue'
-import CustomCursor from './components/CustomCursor.vue'
 import { useSite } from './composables/useSite'
 
 /**
@@ -17,7 +16,6 @@ const apiDown = computed(() => import.meta.env.DEV && !!error.value)
 
 <template>
   <GrainOverlay />
-  <CustomCursor />
 
   <div v-if="apiDown" class="api-down">
     <span class="api-down__title">The API is not answering.</span>
