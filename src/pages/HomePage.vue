@@ -451,13 +451,19 @@ const onNotify = () => {
 }
 
 .hero__headline h1 {
+  /* The name is meant to stack — "ghaith" over "salih" — and the rest of the
+     hero is composed around that block. Left to the container's own width it
+     started fitting on one line once the type came down, which emptied the
+     middle of the frame. Measured in em so it holds the break at every size:
+     wider than the longest single word, narrower than the whole name. */
+  max-width: 5em;
   font-weight: 700;
   /* Bounded by height as well as width. Sized off viewport width alone, the
      name grew while the frame that has to hold it shrank, and on a short window
      the tagline ended up on top of the intro paragraph. The 14vh term is what
      keeps the headline block inside the space between the frame's top inset and
      the intro pinned to its bottom. */
-  font-size: clamp(46px, min(9vw, 14vh), 152px);
+  font-size: clamp(46px, min(9vw, 12vh), 152px);
   line-height: 0.86;
   letter-spacing: -0.045em;
   text-transform: lowercase;
