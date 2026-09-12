@@ -438,7 +438,9 @@ const onNotify = () => {
 
 .hero__stage {
   position: relative;
-  height: clamp(600px, 92vh, 1040px);
+  /* The cap used to be 1040px, so on a 1440-tall screen the hero stopped at
+     72% of the viewport and left a band of background under it. */
+  height: clamp(600px, 92vh, 1280px);
   padding-top: 96px;
 }
 
@@ -452,7 +454,7 @@ const onNotify = () => {
 
 .hero__headline h1 {
   font-weight: 700;
-  font-size: clamp(58px, 11.5vw, 184px);
+  font-size: clamp(58px, 11.5vw, 240px);
   line-height: 0.86;
   letter-spacing: -0.045em;
   text-transform: lowercase;
