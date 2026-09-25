@@ -61,6 +61,7 @@ jobs:
             --exclude '/alraghad.com.iq/' \
             --exclude '/muhanadkadim.com/' \
             --exclude '/storage.alraghad.com.iq/' \
+            --exclude '/depth-of-field/' \
             --exclude '/.well-known/' \
             dist/ ghaith@5.75.207.198:/home/ghaith/public_html/
 
