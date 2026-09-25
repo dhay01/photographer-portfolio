@@ -96,7 +96,11 @@ const onNotify = () => {
             <h1 data-reveal>
               {{ site?.name }}<span class="hero__mark">&reg;</span>
             </h1>
-            <p data-reveal class="hero__tagline">{{ site?.tagline }}</p>
+            <!-- Authored in a rich text editor, so it arrives as markup and has to
+                 be rendered as such. A div rather than a p: the editor emits its own
+                 paragraphs and a p inside a p is invalid, which browsers silently
+                 fix by un-nesting — taking the styling with it. -->
+            <div data-reveal class="hero__tagline" v-html="site?.tagline" />
           </div>
 
           <div data-reveal class="hero__micro">
@@ -108,14 +112,14 @@ const onNotify = () => {
             </template>
           </div>
 
-          <div data-reveal class="hero__intro">
+          <!-- <div data-reveal class="hero__intro">
             <p>
               <span class="hero__dash">&mdash;&nbsp;</span><span v-html="emphasise(page?.intro)" />
             </p>
             <RouterLink to="/work" class="btn btn--sm">
               {{ $t('home.viewWork') }} <span class="arrow">&rarr;</span>
             </RouterLink>
-          </div>
+          </div> -->
         </HeroCarousel>
       </div>
     </section>
@@ -476,6 +480,16 @@ const onNotify = () => {
   transform: translateY(0.35em);
   margin-left: 0.06em;
   font-weight: 400;
+}
+
+/* v-html content sits outside scoped styling, so the editor's own paragraphs
+   have to be reached into and stripped of their default margins. */
+.hero__tagline :deep(p) {
+  margin: 0;
+}
+
+.hero__tagline :deep(a) {
+  text-decoration: underline;
 }
 
 .hero__tagline {

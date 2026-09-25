@@ -49,7 +49,13 @@ watch(() => route.fullPath, () => (open.value = false))
 <template>
   <nav :class="['site-nav', { 'site-nav--absolute': absolute }]">
     <RouterLink to="/" data-reveal class="wordmark">
-      {{ site?.name }}<span class="wordmark__mark">&reg;</span>
+      <!-- A logo replaces the set name outright rather than sitting beside it.
+           Nothing is lost when none is uploaded: the name is the fallback, which
+           is also what the site shipped with. -->
+      <img v-if="site?.logo" :src="site.logo" :alt="site?.name" class="wordmark__logo" />
+      <template v-else>
+        {{ site?.name }}<span class="wordmark__mark">&reg;</span>
+      </template>
     </RouterLink>
 
     <div data-reveal class="nav-links">
@@ -146,6 +152,15 @@ watch(() => route.fullPath, () => (open.value = false))
   font-weight: 700;
   font-size: 17px;
   letter-spacing: -0.01em;
+}
+
+/* Bounded by height so any shape of logo sits on the same line as the nav links,
+   and by width so an unexpectedly wide one cannot push them off the row. */
+.wordmark__logo {
+  height: clamp(22px, 2.2vw, 32px);
+  max-width: 220px;
+  width: auto;
+  object-fit: contain;
 }
 
 .wordmark__mark {
