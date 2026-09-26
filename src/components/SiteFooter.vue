@@ -142,9 +142,9 @@ const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 /* Bounded by height rather than width so any proportion of logo keeps the line
    the same height, and dimmed because it is a signature here, not a masthead. */
 .footer-logo {
-  height: 26px;
+  height: 38px;
   width: auto;
-  max-width: 180px;
+  max-width: 240px;
   object-fit: contain;
   opacity: 0.85;
 }

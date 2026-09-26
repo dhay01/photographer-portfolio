@@ -157,8 +157,11 @@ watch(() => route.fullPath, () => (open.value = false))
 /* Bounded by height so any shape of logo sits on the same line as the nav links,
    and by width so an unexpectedly wide one cannot push them off the row. */
 .wordmark__logo {
-  height: clamp(22px, 2.2vw, 32px);
-  max-width: 220px;
+  /* Sized against the nav rather than against the text it replaced. A signature
+     carries a lot of empty space above and below its strokes, so matching the
+     wordmark's height left the mark itself looking half the size. */
+  height: clamp(38px, 4vw, 64px);
+  max-width: 300px;
   width: auto;
   object-fit: contain;
 }
