@@ -7,6 +7,7 @@ import SiteFooter from '../components/SiteFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { getCategories, getPage, getPhotos } from '../lib/api'
+import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -22,7 +23,7 @@ const { data: photos, error, reload } = useContent((locale) => getPhotos(null, l
 })
 
 const all = computed(() => photos.value ?? [])
-const shot = (photo) => photo.images?.full ?? photo.images?.preview
+const shot = (photo) => webSrc(photo.images, 'preview')
 const withImages = computed(() => all.value.filter(shot))
 
 const ratioOf = (photo) => {
@@ -183,7 +184,7 @@ onBeforeUnmount(() => ctx?.revert())
             @click="openLightbox(photosIn(c.slug))"
           >
             <span class="cat__img">
-              <ImageSlot :src="c.images?.preview" :alt="c.name" :placeholder="c.name" fit="cover" />
+              <ImageSlot :src="webSrc(c.images, 'preview')" :alt="c.name" :placeholder="c.name" fit="cover" />
             </span>
             <span class="cat__name">{{ c.name }}</span>
           </button>

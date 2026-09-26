@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { webSrc } from '../lib/images'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -10,6 +11,7 @@ const emit = defineEmits(['close', 'step'])
 
 const zoomOpen = ref(false)
 const current = computed(() => props.items[props.position] ?? null)
+const stageSrc = computed(() => webSrc(current.value?.images, 'full'))
 const counter = computed(
   () =>
     `${String(props.position + 1).padStart(2, '0')} / ${String(props.items.length).padStart(2, '0')}`,
@@ -121,8 +123,8 @@ onBeforeUnmount(() => {
       <div class="lb__stage">
         <div class="lb__frame">
           <img
-            v-if="current.images"
-            :src="current.images.full"
+            v-if="stageSrc"
+            :src="stageSrc"
             :alt="current.alt"
             class="lb__img"
           />

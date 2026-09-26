@@ -8,6 +8,7 @@ import PostCard from '../components/PostCard.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getCategories, getHeroSlides, getPage, getPhotos, getPosts, getWorkshops } from '../lib/api'
+import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
 import { useSite } from '../composables/useSite'
 
@@ -35,7 +36,7 @@ const featuredGalleries = computed(() =>
 )
 
 const heroSlides = computed(() =>
-  (slides.value ?? []).map((slide) => ({ src: slide.images?.preview, alt: slide.alt })),
+  (slides.value ?? []).map((slide) => ({ src: webSrc(slide.images, 'preview'), alt: slide.alt })),
 )
 
 // Deep-zoom tiles are generated per photo, and most frames have not been tiled
@@ -152,7 +153,7 @@ const onNotify = () => {
           >
             <div data-tile-img class="tile__img">
               <ImageSlot
-                :src="gallery.images?.preview"
+                :src="webSrc(gallery.images, 'preview')"
                 :alt="gallery.name"
                 :placeholder="gallery.name"
                 fit="cover"
@@ -195,7 +196,7 @@ const onNotify = () => {
           >
             <div data-tile-img class="giga__img">
               <ImageSlot
-                :src="gigaHero.images?.full ?? gigaHero.images?.preview"
+                :src="webSrc(gigaHero.images, 'full')"
                 :alt="gigaHero.alt"
                 :placeholder="gigaHero.title"
                 fit="cover"
@@ -227,7 +228,7 @@ const onNotify = () => {
               @click="openGiga(i + 1)"
             >
               <ImageSlot
-                :src="shot.images?.thumb ?? shot.images?.preview"
+                :src="webSrc(shot.images, 'thumb')"
                 :alt="shot.alt"
                 :placeholder="shot.title"
                 fit="cover"
@@ -243,7 +244,7 @@ const onNotify = () => {
       <div class="about__grid">
         <div data-fade class="about__portrait">
           <ImageSlot
-            :src="site?.author?.images?.preview"
+            :src="webSrc(site?.author?.images, 'preview')"
             :alt="site?.author?.name"
             fit="cover"
           />

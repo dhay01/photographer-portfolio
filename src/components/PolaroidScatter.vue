@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import ImageSlot from './ImageSlot.vue'
+import { webSrc } from '../lib/images'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -108,7 +109,7 @@ onBeforeUnmount(() => ctx?.revert())
       <div data-polaroid-inner class="pola__inner">
         <div class="pola__img">
           <ImageSlot
-            :src="item.photo.images?.thumb ?? item.photo.images?.preview"
+            :src="webSrc(item.photo.images, 'thumb')"
             :alt="item.photo.alt ?? item.photo.title"
             :placeholder="item.photo.title"
             fit="cover"

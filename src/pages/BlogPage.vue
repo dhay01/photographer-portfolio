@@ -6,6 +6,7 @@ import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getPage, getPosts } from '../lib/api'
+import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
 import { useSite } from '../composables/useSite'
 import { monthYear } from '../lib/format'
@@ -50,7 +51,7 @@ const footerLinks = computed(() => {
         <div class="featured__media">
           <div data-tile-img class="featured__img">
             <ImageSlot
-              :src="featuredPost.images?.preview"
+              :src="webSrc(featuredPost.images, 'preview')"
               :alt="featuredPost.title"
               placeholder="featured cover"
             />

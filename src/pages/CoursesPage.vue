@@ -5,6 +5,7 @@ import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getPage, getWorkshops } from '../lib/api'
+import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
 import { dateParts, monthName, price, shortDate, workshopDates } from '../lib/format'
 
@@ -234,7 +235,7 @@ const onReserved = () => (reserved[selectedSlug.value] = true)
         <article v-for="w in pastWorkshops" :key="w.slug" data-fade class="past-card">
           <div class="past-card__media">
             <div class="past-card__img">
-              <ImageSlot :src="w.images?.thumb" :alt="w.title" :placeholder="w.title" />
+              <ImageSlot :src="webSrc(w.images, 'thumb')" :alt="w.title" :placeholder="w.title" />
             </div>
             <div class="mono past-card__flag">Completed</div>
           </div>

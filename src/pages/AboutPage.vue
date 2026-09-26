@@ -6,6 +6,7 @@ import ImageSlot from '../components/ImageSlot.vue'
 import PolaroidScatter from '../components/PolaroidScatter.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getAbout, getPage, getPhotos } from '../lib/api'
+import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
 
 const root = ref(null)
@@ -55,7 +56,7 @@ const emphasise = (text) => {
         <div data-reveal class="hero__media">
           <div class="hero__media-img">
             <ImageSlot
-              :src="about?.hero_image?.preview"
+              :src="webSrc(about?.hero_image, 'preview')"
               :alt="about?.hero_title"
               placeholder="photographer at work · 16:10"
             />
@@ -137,7 +138,7 @@ const emphasise = (text) => {
 
         <div data-fade class="gear__media">
           <ImageSlot
-            :src="about?.gear_image?.preview"
+            :src="webSrc(about?.gear_image, 'preview')"
             :alt="about?.gear_title"
             placeholder="studio / gear still life · 4:5"
           />

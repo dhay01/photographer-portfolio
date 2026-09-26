@@ -7,6 +7,7 @@ import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getPost, getPosts } from '../lib/api'
+import { webSrc } from '../lib/images'
 import { useContent, useContentFor } from '../composables/useContent'
 import { useSite } from '../composables/useSite'
 import { monthYear } from '../lib/format'
@@ -75,7 +76,7 @@ const footerLinks = [
 
       <div data-reveal class="byline">
         <span class="byline__avatar">
-          <ImageSlot :src="author?.images?.thumb" :alt="author?.name" />
+          <ImageSlot :src="webSrc(author?.images, 'thumb')" :alt="author?.name" />
         </span>
         <div class="mono byline__name">
           <span>{{ author?.name }}</span>
@@ -87,7 +88,7 @@ const footerLinks = [
     <section class="cover-wrap">
       <div data-reveal class="cover">
         <div class="cover__img">
-          <ImageSlot :src="post.images?.preview" :alt="post.title" placeholder="article cover · 16:9" />
+          <ImageSlot :src="webSrc(post.images, 'preview')" :alt="post.title" placeholder="article cover · 16:9" />
         </div>
       </div>
     </section>
@@ -131,7 +132,7 @@ const footerLinks = [
     <section class="author-wrap">
       <div data-fade class="author">
         <div class="author__photo">
-          <ImageSlot :src="author?.images?.preview" :alt="author?.name" placeholder="author" />
+          <ImageSlot :src="webSrc(author?.images, 'preview')" :alt="author?.name" placeholder="author" />
         </div>
         <div>
           <div class="mono author__label">{{ $t('blog.writtenBy') }}</div>

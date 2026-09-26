@@ -6,6 +6,7 @@ import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getWorkshop } from '../lib/api'
+import { webSrc } from '../lib/images'
 import { useContentFor } from '../composables/useContent'
 import { useSite } from '../composables/useSite'
 import { price, workshopDates } from '../lib/format'
@@ -74,7 +75,7 @@ const reserveOpen = ref(false)
       <div data-reveal class="cd__cover">
         <div class="cd__cover-img">
           <ImageSlot
-            :src="course.images?.preview"
+            :src="webSrc(course.images, 'preview')"
             :alt="course.title"
             placeholder="course cover · 21:9"
           />
@@ -141,7 +142,7 @@ const reserveOpen = ref(false)
           <div data-fade class="instructor">
             <div class="instructor__photo">
               <ImageSlot
-                :src="instructor?.images?.preview"
+                :src="webSrc(instructor?.images, 'preview')"
                 :alt="instructor?.name"
                 placeholder="instructor"
               />

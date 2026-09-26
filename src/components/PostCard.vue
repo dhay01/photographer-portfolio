@@ -1,6 +1,7 @@
 <script setup>
 import ImageSlot from './ImageSlot.vue'
 import { monthYear } from '../lib/format'
+import { webSrc } from '../lib/images'
 
 defineProps({
   post: { type: Object, required: true },
@@ -14,7 +15,7 @@ defineProps({
     <div class="card__media">
       <div data-tile-img class="card__img">
         <ImageSlot
-          :src="post.images?.thumb"
+          :src="webSrc(post.images, 'thumb')"
           :alt="post.title"
           :placeholder="post.category?.name"
         />
