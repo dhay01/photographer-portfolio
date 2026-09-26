@@ -4,6 +4,7 @@ import SiteNav from '../components/SiteNav.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PolaroidScatter from '../components/PolaroidScatter.vue'
+import { useSite } from '../composables/useSite'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getAbout, getPage, getPhotos } from '../lib/api'
 import { webSrc } from '../lib/images'
@@ -11,6 +12,8 @@ import { useContent } from '../composables/useContent'
 
 const root = ref(null)
 useSiteMotion(root)
+
+const { site } = useSite()
 
 const { data: page } = useContent(getPage.bind(null, 'about'))
 const { data: about, pending, error } = useContent(getAbout)
@@ -70,6 +73,18 @@ const emphasise = (text) => {
         <div data-reveal>
           <!-- Authored in the dashboard; **bold** is the only markup honoured. -->
           <p class="hero__intro" v-html="emphasise(about?.hero_intro)" />
+
+          <!-- The uploaded logo is a handwritten signature, so here it signs the
+               statement it sits under rather than repeating the name. Absent one,
+               nothing takes its place: an empty frame would read as a broken image. -->
+          <img
+            v-if="site?.logo"
+            data-sign
+            class="signature"
+            :src="site.logo"
+            :alt="site?.name"
+          />
+
           <div class="chips">
             <span v-for="d in about?.disciplines ?? []" :key="d" class="chip mono">{{ d }}</span>
           </div>
@@ -287,6 +302,20 @@ const emphasise = (text) => {
 
 .hero__intro strong {
   font-weight: 500;
+}
+
+/* Sized against the prose it closes, not in pixels: the signature should read
+   as a hand at the same scale as the writing, on every screen. */
+.signature {
+  display: block;
+  height: clamp(58px, 6vw, 92px);
+  width: auto;
+  max-width: min(260px, 60%);
+  object-fit: contain;
+  object-position: left center;
+  margin-top: clamp(20px, 2.4vw, 32px);
+  /* Ink, not interface. At full white it competes with the sentence above it. */
+  opacity: 0.88;
 }
 
 .chips {
