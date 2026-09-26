@@ -46,7 +46,12 @@ const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
       </div>
 
       <div class="footer-base">
-        <span>{{ $t('common.rights', { year: site?.year ?? '', name: site?.name ?? '' }) }}</span>
+        <span class="footer-base__sig">
+          <!-- The same logo as the header. It sits at the foot of the page as a
+               signature, so it is quieter here than up there. -->
+          <img v-if="site?.logo" :src="site.logo" :alt="site?.name" class="footer-logo" />
+          {{ $t('common.rights', { year: site?.year ?? '', name: site?.name ?? '' }) }}
+        </span>
         <button type="button" class="footer-top" @click="scrollTop">{{ $t('common.backToTop') }}</button>
       </div>
     </div>
@@ -126,6 +131,22 @@ const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
 .footer-social a:hover {
   opacity: 1;
+}
+
+.footer-base__sig {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Bounded by height rather than width so any proportion of logo keeps the line
+   the same height, and dimmed because it is a signature here, not a masthead. */
+.footer-logo {
+  height: 26px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  opacity: 0.85;
 }
 
 .footer-base {
