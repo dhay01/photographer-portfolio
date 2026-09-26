@@ -47,23 +47,9 @@ jobs:
         env:
           VITE_API_URL: https://api.ghaith-art.com
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.1
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
         with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Trust host
-        run: mkdir -p ~/.ssh && ssh-keyscan -H 5.75.207.198 >> ~/.ssh/known_hosts
-
-      - name: Rsync dist
-        run: |
-          rsync -az --delete \
-            --exclude '/alraghad.com.iq/' \
-            --exclude '/muhanadkadim.com/' \
-            --exclude '/storage.alraghad.com.iq/' \
-            --exclude '/depth-of-field/' \
-            --exclude '/.well-known/' \
-            dist/ ghaith@5.75.207.198:/home/ghaith/public_html/
-
-      - name: Purge nginx cache
-        run: ssh root@5.75.207.198 purge-nginx
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=ghaith-art --commit-dirty=true
