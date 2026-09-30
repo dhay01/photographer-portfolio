@@ -67,7 +67,6 @@ const emphasise = (text) => {
           <div class="hero__media-scrim" />
           <div data-bracket class="bracket bracket--sm hero__bracket-tl" />
           <div data-bracket class="bracket bracket--sm hero__bracket-br" />
-          <span data-cross class="hero__cross mono">+</span>
         </div>
 
         <div data-reveal>
@@ -281,15 +280,6 @@ const emphasise = (text) => {
   height: 34px;
   border-bottom: 1.5px solid var(--accent);
   border-right: 1.5px solid var(--accent);
-}
-
-.hero__cross {
-  position: absolute;
-  top: 30%;
-  right: 22%;
-  font-size: 20px;
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .hero__intro {

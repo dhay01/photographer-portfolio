@@ -13,7 +13,6 @@ const prefersReducedMotion = () =>
  * Opt in per element with data attributes:
  *   data-reveal   intro stagger from above/below on mount
  *   data-fade     scroll-triggered rise + fade
- *   data-cross    slow floating loop (hero focus marks)
  *   data-bracket  scale-in on mount
  *   data-tile     hover zoom of its [data-tile-img] child
  *   data-sign     handwritten mark, wiped on left to right as if written
@@ -64,8 +63,6 @@ export function useSiteMotion(rootRef) {
       // tree changes, and each element is marked so it is only wired once.
       // The on-load stagger above is deliberately not re-run: it belongs to the
       // page's entrance, not to whatever shows up later.
-      let crossIndex = 0
-
       const wire = (selector, setup) => {
         root.querySelectorAll(selector).forEach((el) => {
           if (el.dataset.motionReady) return
@@ -75,17 +72,6 @@ export function useSiteMotion(rootRef) {
       }
 
       const wireAll = () => {
-        wire('[data-cross]', (cross) => {
-          gsap.to(cross, {
-            y: '+=10',
-            // Staggered periods so several marks never drift in lockstep.
-            duration: 3 + (crossIndex++ * 0.5),
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-          })
-        })
-
         wire('[data-fade]', (el) => {
           gsap.from(el, {
             y: 46,

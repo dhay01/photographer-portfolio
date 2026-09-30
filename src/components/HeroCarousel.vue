@@ -62,10 +62,6 @@ useHeroParallax(frame)
     <div data-bracket class="bracket bracket--bl" />
     <div data-bracket class="bracket bracket--br" />
 
-    <span data-cross class="cross" style="top: 34%; left: 16%; opacity: 0.75">+</span>
-    <span data-cross class="cross" style="top: 58%; left: 40%; opacity: 0.7">+</span>
-    <span data-cross class="cross" style="top: 30%; right: 30%; opacity: 0.65">+</span>
-
     <slot />
 
     <div class="hero-controls">
@@ -121,15 +117,6 @@ useHeroParallax(frame)
 
 .scrim--h {
   background: linear-gradient(90deg, rgba(11, 12, 14, 0.6) 0%, rgba(11, 12, 14, 0) 42%);
-}
-
-.cross {
-  position: absolute;
-  z-index: 6;
-  font-family: var(--font-mono);
-  font-size: 20px;
-  color: var(--accent);
-  pointer-events: none;
 }
 
 .hero-controls {
