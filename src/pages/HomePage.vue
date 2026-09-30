@@ -146,11 +146,9 @@ const onNotify = () => {
             data-tile
             data-fade
             class="tile"
-            :style="{
-              gridColumn: `span ${gallery.grid_span}`,
-              aspectRatio: gallery.grid_ratio ?? undefined,
-            }"
+            :style="{ gridColumn: `span ${gallery.grid_span}` }"
           >
+            <div class="tile__shape" :style="{ aspectRatio: gallery.grid_ratio ?? undefined }" />
             <div data-tile-img class="tile__img">
               <ImageSlot
                 :src="webSrc(gallery.images, 'preview')"
@@ -690,11 +688,16 @@ const onNotify = () => {
   gap: clamp(14px, 1.6vw, 22px);
 }
 
+/* The dashboard's ratio shapes the tile through .tile__shape, up to a height
+   cap. A cap on a box that carries the ratio itself is transferred across it and
+   narrows the tile out of its columns instead of shortening it. */
 .tile {
   position: relative;
   border-radius: 8px;
   overflow: hidden;
   display: block;
+  min-height: 200px;
+  max-height: clamp(200px, 40vh, 420px);
 }
 
 .tile__img {
@@ -746,6 +749,9 @@ const onNotify = () => {
 
   .tile {
     grid-column: 1 / -1 !important;
+  }
+
+  .tile__shape {
     aspect-ratio: 4 / 3 !important;
   }
 }
