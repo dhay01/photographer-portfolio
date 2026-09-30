@@ -68,7 +68,7 @@ const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
   display: block;
   margin-top: 26px;
   font-weight: 700;
-  font-size: clamp(40px, 9vw, 150px);
+  font-size: clamp(34px, 5.5vw, 80px);
   line-height: 0.92;
   letter-spacing: -0.04em;
   text-transform: lowercase;
