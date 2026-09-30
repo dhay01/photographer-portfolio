@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import SiteNav from '../components/SiteNav.vue'
 import SiteFooter from '../components/SiteFooter.vue'
+import HeroCarousel from '../components/HeroCarousel.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { getCategories, getPage, getPhotos } from '../lib/api'
@@ -26,28 +27,11 @@ const all = computed(() => photos.value ?? [])
 const shot = (photo) => webSrc(photo.images, 'preview')
 const withImages = computed(() => all.value.filter(shot))
 
-const ratioOf = (photo) => {
-  const [w, h] = String(photo?.ratio ?? '3/2').split('/').map(Number)
-  return h ? w / h : 1.5
-}
-
-// The opening frame plus two more — three photographs in the run, shown at
-// full width with no chrome on them at all. Untiled photographs would scroll a grey placeholder,
-// so anything with a file wins a slot, and the widest go first — they are what
-// the full width is for.
-const opener = computed(() => withImages.value[0] ?? all.value[0] ?? null)
-
-const panoramas = computed(() => {
-  const pool = withImages.value.slice(1)
-  const wide = pool.filter((photo) => ratioOf(photo) >= 1.6)
-  // One panorama is not a run. Until more frames are tiled and uploaded, fall
-  // back to the widest of whatever else is there rather than showing a single
-  // band and calling it a section.
-  if (wide.length >= 2) return wide.slice(0, 2)
-  return [...pool].sort((a, b) => ratioOf(b) - ratioOf(a)).slice(0, 2)
-})
-
-const parallaxShots = computed(() => (opener.value ? [opener.value, ...panoramas.value] : []))
+// Every slide's image is fetched up front, so the slider takes a handful of
+// frames rather than the whole archive.
+const heroSlides = computed(() =>
+  withImages.value.slice(0, 5).map((photo) => ({ src: shot(photo), alt: photo.alt })),
+)
 
 // Deep-zoom tiles are generated per photograph and most have not been through
 // it yet; the slide falls back so the section is never empty.
@@ -82,30 +66,16 @@ const stepLightbox = (delta) => {
 
 let ctx
 watch(
-  parallaxShots,
+  categories,
   async (list) => {
     ctx?.revert()
     ctx = null
-    if (!list.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!list?.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     await nextTick()
     if (!root.value) return
 
     ctx = gsap.context(() => {
-      root.value.querySelectorAll('[data-para]').forEach((panel) => {
-        // The image is taller than the frame that crops it, and that overhang is
-        // what it travels through as the page scrolls.
-        gsap.fromTo(
-          panel.querySelector('[data-para-img]'),
-          { yPercent: -8 },
-          {
-            yPercent: 8,
-            ease: 'none',
-            scrollTrigger: { trigger: panel, start: 'top bottom', end: 'bottom top', scrub: 0.5 },
-          },
-        )
-      })
-
       root.value.querySelectorAll('[data-cat]').forEach((tile, i) => {
         gsap.from(tile, {
           y: 40,
@@ -135,35 +105,15 @@ onBeforeUnmount(() => ctx?.revert())
       <button type="button" class="work__retry" @click="reload()">{{ $t('common.retry') }}</button>
     </p>
 
-    <!-- OPENING FRAME -->
-    <section v-if="opener" data-para class="para para--lead">
-      <div data-para-img class="para__img">
-        <ImageSlot :src="shot(opener)" :alt="opener.alt" :placeholder="opener.title" fit="cover" />
-      </div>
-      <div class="para__scrim" />
-
-      <div class="para__copy">
-        <span class="eyebrow para__eyebrow">{{ page?.eyebrow }}</span>
-        <h1 class="para__title">{{ page?.title }}</h1>
-      </div>
-
-      <span class="para__cue" aria-hidden="true">&#8964;</span>
-    </section>
-
-    <!-- PANORAMAS — nothing on top of them -->
-    <section
-      v-for="photo in panoramas"
-      :key="photo.slug"
-      data-para
-      class="para"
-      role="button"
-      tabindex="0"
-      :aria-label="`Open ${photo.title}`"
-      @click="openLightbox(withImages, withImages.indexOf(photo))"
-      @keydown.enter="openLightbox(withImages, withImages.indexOf(photo))"
-    >
-      <div data-para-img class="para__img">
-        <ImageSlot :src="shot(photo)" :alt="photo.alt" :placeholder="photo.title" fit="cover" />
+    <!-- OPENING SLIDER -->
+    <section class="hero">
+      <div class="hero__stage">
+        <HeroCarousel :slides="heroSlides">
+          <div class="hero__copy">
+            <span class="eyebrow hero__eyebrow">{{ page?.eyebrow }}</span>
+            <h1 class="hero__title">{{ page?.title }}</h1>
+          </div>
+        </HeroCarousel>
       </div>
     </section>
 
@@ -258,85 +208,46 @@ onBeforeUnmount(() => ctx?.revert())
   color: inherit;
 }
 
-/* ---------- parallax ---------- */
+/* ---------- opening slider ---------- */
 
-.para {
+/* The home page's stage, so the two sliders sit in the same frame. */
+.hero {
   position: relative;
-  height: 86svh;
-  min-height: 430px;
-  overflow: hidden;
-  cursor: pointer;
+  width: 100%;
+  padding: 0 clamp(16px, 2.2vw, 34px);
 }
 
-.para--lead {
-  height: 100svh;
-  min-height: 520px;
-  cursor: default;
+.hero__stage {
+  position: relative;
+  height: clamp(600px, 92vh, 1040px);
+  padding-top: 96px;
 }
 
-/* Taller than the frame on both edges: that overhang is the travel. */
-.para__img {
+.hero__copy {
   position: absolute;
-  inset: -11% 0;
-  will-change: transform;
+  top: 16%;
+  left: var(--gutter);
+  z-index: 7;
+  max-width: min(70%, 900px);
 }
 
-/* Only the opening frame is darkened, and only because type sits on it. */
-.para__scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(11, 12, 14, 0.62) 0%,
-    rgba(11, 12, 14, 0.08) 38%,
-    rgba(11, 12, 14, 0.72) 100%
-  );
-}
-
-.para__copy {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: clamp(60px, 11vh, 130px);
-  z-index: 2;
-  padding: 0 var(--gutter);
-  text-align: center;
-}
-
-.para__eyebrow {
+.hero__eyebrow {
   display: block;
   margin-bottom: 16px;
 }
 
-.para__title {
+.hero__title {
   font-weight: 700;
-  font-size: clamp(38px, 9.5vw, 168px);
+  font-size: clamp(46px, min(9vw, 12vh), 152px);
   line-height: 0.9;
   letter-spacing: -0.03em;
   text-transform: uppercase;
   text-wrap: balance;
 }
 
-.para__cue {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(26px, 5vh, 52px);
-  z-index: 3;
-  transform: translateX(-50%);
-  font-size: 26px;
-  line-height: 1;
-  opacity: 0.7;
-  animation: gs-cue 2.4s ease-in-out infinite;
-}
-
-@keyframes gs-cue {
-  0%,
-  100% {
-    transform: translateX(-50%) translateY(0);
-  }
-  50% {
-    transform: translateX(-50%) translateY(6px);
+@media (max-width: 720px) {
+  .hero__copy {
+    max-width: 100%;
   }
 }
 

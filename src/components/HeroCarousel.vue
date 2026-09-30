@@ -16,6 +16,8 @@ const pad = (n) => String(n).padStart(2, '0')
 const counter = computed(() => `${pad(active.value + 1)} / ${pad(props.slides.length)}`)
 
 const go = (n) => {
+  // Slides arrive from the API; a tick before they do would make this NaN for good.
+  if (!props.slides.length) return
   active.value = (n + props.slides.length) % props.slides.length
 }
 
