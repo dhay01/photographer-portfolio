@@ -405,12 +405,6 @@ const onNotify = () => {
           </span>
         </div>
       </div>
-      <div class="clients__rating">
-        <div class="mono clients__stars">
-          <span>&#9733;&#9733;&#9733;&#9733;&#9733;</span>&nbsp;&nbsp;4.9/5
-        </div>
-        <div class="mono clients__note">{{ section('clients').note }}</div>
-      </div>
     </section>
 
         <WorkLightbox
@@ -581,26 +575,6 @@ const onNotify = () => {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.clients__rating {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.clients__stars {
-  letter-spacing: 0.1em;
-  font-size: 13px;
-}
-
-.clients__stars span {
-  color: var(--accent);
-}
-
-.clients__note {
-  font-size: 11px;
-  opacity: 0.55;
-  margin-top: 4px;
 }
 
 /* ---------- about ---------- */
