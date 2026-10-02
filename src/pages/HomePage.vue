@@ -31,9 +31,41 @@ const section = (key) => page.value?.sections?.[key] ?? {}
 const items = (key) => section(key).items ?? []
 
 // The home page shows the first four categories that opted into the showcase.
-const featuredGalleries = computed(() =>
-  (galleries.value ?? []).filter((c) => c.grid_span).slice(0, 4),
-)
+// Spans are typed into the dashboard one category at a time, so nothing makes a
+// row add up to twelve — a lone span of 1 rendered as a sliver. Tiles are packed
+// into rows of twelve and each row is widened to the full width, keeping the
+// proportions between its tiles; leftover columns go to the largest remainders.
+const featuredGalleries = computed(() => {
+  const picked = (galleries.value ?? []).filter((c) => c.grid_span).slice(0, 4)
+
+  const rows = []
+  for (const gallery of picked) {
+    const span = Math.min(12, Math.max(1, Math.round(Number(gallery.grid_span)) || 12))
+    const row = rows.at(-1)
+    if (row && row.total + span <= 12) {
+      row.tiles.push({ gallery, span })
+      row.total += span
+    } else {
+      rows.push({ tiles: [{ gallery, span }], total: span })
+    }
+  }
+
+  return rows.flatMap(({ tiles, total }) => {
+    const exact = tiles.map(({ span }) => (span / total) * 12)
+    const cols = exact.map(Math.floor)
+    let spare = 12 - cols.reduce((sum, n) => sum + n, 0)
+    exact
+      .map((value, i) => [value - cols[i], i])
+      .sort((a, b) => b[0] - a[0])
+      .forEach(([, i]) => {
+        if (spare > 0) {
+          cols[i] += 1
+          spare -= 1
+        }
+      })
+    return tiles.map(({ gallery }, i) => ({ ...gallery, cols: cols[i] }))
+  })
+})
 
 const heroSlides = computed(() =>
   (slides.value ?? []).map((slide) => ({ src: webSrc(slide.images, 'preview'), alt: slide.alt })),
@@ -146,9 +178,9 @@ const onNotify = () => {
             data-tile
             data-fade
             class="tile"
-            :style="{ gridColumn: `span ${gallery.grid_span}` }"
+            :style="{ gridColumn: `span ${gallery.cols}` }"
           >
-            <div class="tile__shape" :style="{ aspectRatio: gallery.grid_ratio ?? undefined }" />
+            <div class="tile__shape" :style="{ aspectRatio: gallery.grid_ratio || '3 / 2' }" />
             <div data-tile-img class="tile__img">
               <ImageSlot
                 :src="webSrc(gallery.images, 'preview')"
