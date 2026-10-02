@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import SiteNav from '../components/SiteNav.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import MiniFooter from '../components/MiniFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
@@ -61,7 +62,13 @@ const footerLinks = [
 
     <template v-else-if="post">
     <header class="post__head">
-      <RouterLink to="/blog" class="mono post__back">{{ $t('blog.back') }}</RouterLink>
+      <Breadcrumbs
+        :items="[
+          { label: $t('nav.home'), to: '/' },
+          { label: $t('nav.blog'), to: '/blog' },
+          { label: post.title },
+        ]"
+      />
 
       <div data-reveal class="mono post__meta">
         <span class="post__cat">{{ post.category?.name }}</span>
@@ -198,16 +205,6 @@ const footerLinks = [
   padding: clamp(16px, 2vw, 28px) var(--gutter) clamp(28px, 3.5vw, 44px);
   max-width: 900px;
   margin: 0 auto;
-}
-
-.post__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.6;
 }
 
 .post__meta {

@@ -9,7 +9,8 @@
     "menu": "",
     "close": "",
     "language": "",
-    "languageSoon": ""
+    "languageSoon": "",
+    "breadcrumb": ""
   },
   "common": {
     "loading": "",
@@ -61,7 +62,6 @@
     "featured": "",
     "readStory": "",
     "allArticles": "",
-    "back": "",
     "unwritten": "",
     "writtenBy": "",
     "follow": "",
@@ -69,7 +69,6 @@
     "readTime": ""
   },
   "courses": {
-    "back": "",
     "all": "",
     "workshopDay": "",
     "selected": "",

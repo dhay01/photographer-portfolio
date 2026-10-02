@@ -3,6 +3,7 @@ import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import SiteNav from '../components/SiteNav.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 import HeroCarousel from '../components/HeroCarousel.vue'
 import ImageSlot from '../components/ImageSlot.vue'
@@ -110,6 +111,10 @@ onBeforeUnmount(() => ctx?.revert())
       <div class="hero__stage">
         <HeroCarousel :slides="heroSlides">
           <div class="hero__copy">
+            <Breadcrumbs
+              :items="[{ label: $t('nav.home'), to: '/' }, { label: $t('nav.work') }]"
+              class="hero__crumbs"
+            />
             <span class="eyebrow hero__eyebrow">{{ page?.eyebrow }}</span>
             <h1 class="hero__title">{{ page?.title }}</h1>
           </div>
@@ -229,6 +234,10 @@ onBeforeUnmount(() => ctx?.revert())
   left: var(--gutter);
   z-index: 7;
   max-width: min(70%, 900px);
+}
+
+.hero__crumbs {
+  margin-bottom: 22px;
 }
 
 .hero__eyebrow {

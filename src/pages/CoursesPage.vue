@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, reactive, watch } from 'vue'
 import SiteNav from '../components/SiteNav.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
@@ -103,6 +104,10 @@ const onReserved = () => (reserved[selectedSlug.value] = true)
     <SiteNav />
 
     <header class="courses__head">
+      <Breadcrumbs
+        :items="[{ label: $t('nav.home'), to: '/' }, { label: $t('nav.courses') }]"
+        class="courses__crumbs"
+      />
       <span class="eyebrow">{{ page?.eyebrow }}</span>
       <div class="courses__head-row">
         <h1 class="courses__title" style="white-space: pre-line">{{ page?.title }}</h1>
@@ -274,6 +279,10 @@ const onReserved = () => (reserved[selectedSlug.value] = true)
 
 .courses__head {
   padding: clamp(20px, 3vw, 40px) var(--gutter) clamp(20px, 2.5vw, 32px);
+}
+
+.courses__crumbs {
+  margin-bottom: 22px;
 }
 
 .courses__head-row {

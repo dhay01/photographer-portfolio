@@ -43,6 +43,12 @@ const switchTo = (code) => {
 const route = useRoute()
 const open = ref(false)
 
+// A category, a post or a course sits under its section, so the section stays lit
+// while the visitor is anywhere inside it rather than only on its index page.
+const isCurrent = (to) =>
+  !to.includes('#') &&
+  (to === '/' ? route.path === '/' : route.path === to || route.path.startsWith(`${to}/`))
+
 watch(() => route.fullPath, () => (open.value = false))
 </script>
 
@@ -59,7 +65,12 @@ watch(() => route.fullPath, () => (open.value = false))
     </RouterLink>
 
     <div data-reveal class="nav-links">
-      <RouterLink v-for="link in links" :key="link.to" :to="link.to" class="nav-link">
+      <RouterLink
+        v-for="link in links"
+        :key="link.to"
+        :to="link.to"
+        :class="['nav-link', { 'nav-link--on': isCurrent(link.to) }]"
+      >
         {{ $t(`nav.${link.key}`) }}
       </RouterLink>
     </div>
@@ -187,7 +198,7 @@ watch(() => route.fullPath, () => (open.value = false))
 }
 
 .nav-link:hover,
-.nav-link.router-link-exact-active {
+.nav-link--on {
   opacity: 0.9;
 }
 

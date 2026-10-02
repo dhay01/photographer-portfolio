@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import SiteNav from '../components/SiteNav.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import MiniFooter from '../components/MiniFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
@@ -38,6 +39,10 @@ const footerLinks = computed(() => {
     <SiteNav />
 
     <header class="blog__head">
+      <Breadcrumbs
+        :items="[{ label: $t('nav.home'), to: '/' }, { label: $t('nav.blog') }]"
+        class="blog__crumbs"
+      />
       <span class="eyebrow">{{ page?.eyebrow }}</span>
       <div class="blog__head-row">
         <h1 class="blog__title" style="white-space: pre-line">{{ page?.title }}</h1>
@@ -107,6 +112,10 @@ const footerLinks = computed(() => {
 
 .blog__head {
   padding: clamp(20px, 3vw, 40px) var(--gutter) clamp(24px, 3vw, 40px);
+}
+
+.blog__crumbs {
+  margin-bottom: 22px;
 }
 
 .blog__head-row {

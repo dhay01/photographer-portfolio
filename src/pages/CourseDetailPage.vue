@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import SiteNav from '../components/SiteNav.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
@@ -39,7 +40,13 @@ const reserveOpen = ref(false)
 
     <template v-else-if="course">
     <header class="cd__head">
-      <RouterLink to="/courses" class="mono cd__back">{{ $t('courses.back') }}</RouterLink>
+      <Breadcrumbs
+        :items="[
+          { label: $t('nav.home'), to: '/' },
+          { label: $t('nav.courses'), to: '/courses' },
+          { label: course.title },
+        ]"
+      />
 
       <div data-reveal class="mono cd__kicker">
         <span class="cd__mode">{{ course.mode }}</span>
@@ -253,16 +260,6 @@ const reserveOpen = ref(false)
 
 .cd__head {
   padding: clamp(16px, 2vw, 28px) var(--gutter) clamp(30px, 4vw, 52px);
-}
-
-.cd__back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.6;
 }
 
 .cd__kicker {

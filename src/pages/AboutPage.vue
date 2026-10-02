@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import SiteNav from '../components/SiteNav.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import SiteFooter from '../components/SiteFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PolaroidScatter from '../components/PolaroidScatter.vue'
@@ -49,6 +50,11 @@ const emphasise = (text) => {
     <!-- HERO -->
     <section class="hero">
       <div class="shell">
+        <Breadcrumbs
+          data-reveal
+          :items="[{ label: $t('nav.home'), to: '/' }, { label: $t('nav.about') }]"
+          class="hero__crumbs"
+        />
         <span data-reveal class="eyebrow">{{ page?.eyebrow }}</span>
         <h1 data-reveal class="hero__title">
           {{ about?.hero_title }}<span class="hero__mark">&reg;</span>
@@ -199,6 +205,10 @@ const emphasise = (text) => {
 .hero {
   position: relative;
   padding: clamp(140px, 18vh, 220px) var(--gutter) clamp(50px, 7vw, 90px);
+}
+
+.hero__crumbs {
+  margin-bottom: 22px;
 }
 
 .hero__title {

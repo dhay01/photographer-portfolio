@@ -9,7 +9,8 @@
     "menu": "Menu",
     "close": "Close",
     "language": "Language",
-    "languageSoon": "Arabic is coming soon"
+    "languageSoon": "Arabic is coming soon",
+    "breadcrumb": "Breadcrumb"
   },
   "common": {
     "loading": "Loading…",
@@ -61,7 +62,6 @@
     "featured": "Featured",
     "readStory": "Read the story",
     "allArticles": "All articles",
-    "back": "← The blog",
     "unwritten": "This story is still being written — check back soon.",
     "writtenBy": "Written by",
     "follow": "Follow →",
@@ -69,7 +69,6 @@
     "readTime": "{minutes} min read"
   },
   "courses": {
-    "back": "← All courses",
     "all": "All courses",
     "workshopDay": "Workshop day",
     "selected": "Selected",
