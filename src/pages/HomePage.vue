@@ -142,7 +142,7 @@ const onNotify = () => {
           <RouterLink
             v-for="(gallery, i) in featuredGalleries"
             :key="gallery.slug"
-            to="/work"
+            :to="`/work/${gallery.slug}`"
             data-tile
             data-fade
             class="tile"
@@ -164,7 +164,7 @@ const onNotify = () => {
                 <div class="tile__title">{{ gallery.name }}</div>
               </div>
               <span class="tile__count mono">
-                {{ $t('home.frames', { count: gallery.photos_count ?? 0 }) }}
+                {{ $t('home.frames', { count: gallery.photos_count ?? 0 }, gallery.photos_count ?? 0) }}
               </span>
             </div>
           </RouterLink>

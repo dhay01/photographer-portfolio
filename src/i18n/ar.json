@@ -56,7 +56,9 @@
     "zoomIn": "",
     "zoomOut": "",
     "galleriesHeading": "",
-    "galleriesBody": ""
+    "galleriesBody": "",
+    "notFound": "",
+    "empty": ""
   },
   "blog": {
     "featured": "",

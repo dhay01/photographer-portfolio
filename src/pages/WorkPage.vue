@@ -48,8 +48,6 @@ const stepSlide = (delta) => {
   if (n) slide.value = (slide.value + delta + n) % n
 }
 
-const photosIn = (slug) => all.value.filter((photo) => photo.category?.slug === slug)
-
 /* The lightbox is handed an explicit set rather than reading a filter, so a
    category and the gigapixel slide can each open their own run of frames. */
 const lbItems = ref([])
@@ -129,20 +127,18 @@ onBeforeUnmount(() => ctx?.revert())
         <p class="collections__body">{{ page?.intro ?? $t('work.galleriesBody') }}</p>
 
         <div class="cats">
-          <button
+          <RouterLink
             v-for="c in categories"
             :key="c.slug"
             data-cat
-            type="button"
+            :to="`/work/${c.slug}`"
             class="cat"
-            :aria-label="`Open ${c.name}`"
-            @click="openLightbox(photosIn(c.slug))"
           >
             <span class="cat__img">
               <ImageSlot :src="webSrc(c.images, 'preview')" :alt="c.name" :placeholder="c.name" fit="cover" />
             </span>
             <span class="cat__name">{{ c.name }}</span>
-          </button>
+          </RouterLink>
         </div>
       </div>
     </section>
@@ -295,11 +291,7 @@ onBeforeUnmount(() => ctx?.revert())
    the name sits under it, out of the way. */
 .cat {
   display: block;
-  padding: 0;
-  border: none;
-  background: transparent;
   color: inherit;
-  cursor: pointer;
 }
 
 .cat__img {

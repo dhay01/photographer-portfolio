@@ -30,7 +30,7 @@
     "notifyPrompt": "Be first to know when the drop goes live.",
     "notify": "Notify me",
     "notifyThanks": "Thanks — we’ll email you at launch.",
-    "frames": "{count} frames",
+    "frames": "{count} frame | {count} frames",
     "workEyebrow": "(01) — Selected work",
     "gigapixelEyebrow": "(02) — Gigapixel",
     "gigapixelHeading": "Look closer.",
@@ -56,7 +56,9 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "galleriesHeading": "Collections",
-    "galleriesBody": "Each one a body of work built over years — wide horizons, patient light, and the places worth going back to."
+    "galleriesBody": "Each one a body of work built over years — wide horizons, patient light, and the places worth going back to.",
+    "notFound": "We couldn’t find that gallery.",
+    "empty": "No photographs in this gallery yet."
   },
   "blog": {
     "featured": "Featured",
