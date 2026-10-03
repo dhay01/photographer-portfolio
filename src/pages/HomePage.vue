@@ -90,6 +90,9 @@ const stepGiga = (delta) => {
   gigaPos.value = (gigaPos.value + delta + n) % n
 }
 
+// The home page previews the schedule; the courses page has the rest.
+const previewWorkshops = computed(() => (workshops.value ?? []).slice(0, 2))
+
 const latestPosts = computed(() => (posts.value ?? []).slice(0, 3))
 
 const emphasise = (text) => {
@@ -282,12 +285,17 @@ const onNotify = () => {
             <span class="eyebrow">{{ section('learn').eyebrow }}</span>
             <h2 class="display">{{ section('learn').heading }}</h2>
           </div>
-          <p data-fade class="lede courses__note">{{ section('learn').body }}</p>
+          <div data-fade class="courses__aside">
+            <p class="lede courses__note">{{ section('learn').body }}</p>
+            <RouterLink to="/courses" class="link-mono courses__more">
+              {{ $t('home.viewMore') }} <span class="arrow">&rarr;</span>
+            </RouterLink>
+          </div>
         </div>
 
         <div data-fade class="course-list">
           <RouterLink
-            v-for="(course, i) in workshops"
+            v-for="(course, i) in previewWorkshops"
             :key="course.slug"
             :to="`/courses/${course.slug}`"
             data-course
@@ -306,10 +314,6 @@ const onNotify = () => {
             <span class="course-row__arrow">&rarr;</span>
           </RouterLink>
         </div>
-
-        <RouterLink to="/courses" data-fade class="btn courses__cta">
-          {{ $t('home.seeSchedule') }} <span class="arrow">&rarr;</span>
-        </RouterLink>
 
         <div data-fade class="private">
           <div>
@@ -740,6 +744,13 @@ const onNotify = () => {
 
 /* ---------- courses ---------- */
 
+.courses__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
 .courses__note {
   max-width: 320px;
 }
@@ -802,10 +813,6 @@ const onNotify = () => {
   font-size: 17px;
   text-align: right;
   opacity: 0.7;
-}
-
-.courses__cta {
-  margin-top: 44px;
 }
 
 @media (max-width: 900px) {
