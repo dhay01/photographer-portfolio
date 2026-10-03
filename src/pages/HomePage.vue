@@ -30,17 +30,22 @@ const { data: posts } = useContent(getPosts, { initial: [] })
 const section = (key) => page.value?.sections?.[key] ?? {}
 const items = (key) => section(key).items ?? []
 
-// The home page shows the first four categories that opted into the showcase.
-// Spans are typed into the dashboard one category at a time, so nothing makes a
-// row add up to twelve — a lone span of 1 rendered as a sliver. Tiles are packed
-// into rows of twelve and each row is widened to the full width, keeping the
-// proportions between its tiles; leftover columns go to the largest remainders.
+// The first four categories switched on for the home page in the dashboard. Tile
+// widths alternate wide and narrow by position, so nothing is set by hand. Tiles
+// are packed into rows of twelve and each row is widened to the full width,
+// keeping the proportions between its tiles; leftover columns go to the largest
+// remainders, so a lone tile spans the page.
+const FEATURED_SPANS = [7, 5, 5, 7]
+
 const featuredGalleries = computed(() => {
-  const picked = (galleries.value ?? []).filter((c) => c.grid_span).slice(0, 4)
+  const picked = (galleries.value ?? []).filter((c) => c.show_on_home).slice(0, 4)
+  // Before the switch, a category opted in with a hand-set tile width:
+  // const picked = (galleries.value ?? []).filter((c) => c.grid_span).slice(0, 4)
 
   const rows = []
-  for (const gallery of picked) {
-    const span = Math.min(12, Math.max(1, Math.round(Number(gallery.grid_span)) || 12))
+  for (const [i, gallery] of picked.entries()) {
+    const span = FEATURED_SPANS[i]
+    // const span = Math.min(12, Math.max(1, Math.round(Number(gallery.grid_span)) || 12))
     const row = rows.at(-1)
     if (row && row.total + span <= 12) {
       row.tiles.push({ gallery, span })
@@ -172,7 +177,8 @@ const onNotify = () => {
             class="tile"
             :style="{ gridColumn: `span ${gallery.cols}` }"
           >
-            <div class="tile__shape" :style="{ aspectRatio: gallery.grid_ratio || '3 / 2' }" />
+            <!-- Was the hand-set tile shape: :style="{ aspectRatio: gallery.grid_ratio || '3 / 2' }" -->
+            <div class="tile__shape" />
             <div data-tile-img class="tile__img">
               <ImageSlot
                 :src="webSrc(gallery.images, 'preview')"
@@ -663,9 +669,13 @@ const onNotify = () => {
   gap: clamp(14px, 1.6vw, 22px);
 }
 
-/* The dashboard's ratio shapes the tile through .tile__shape, up to a height
-   cap. A cap on a box that carries the ratio itself is transferred across it and
-   narrows the tile out of its columns instead of shortening it. */
+/* Tiles are 3:2 through .tile__shape, up to a height cap. A cap on a box that
+   carries the ratio itself is transferred across it and narrows the tile out of
+   its columns instead of shortening it. */
+.tile__shape {
+  aspect-ratio: 3 / 2;
+}
+
 .tile {
   position: relative;
   border-radius: 8px;
