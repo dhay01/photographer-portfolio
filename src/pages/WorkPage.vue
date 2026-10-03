@@ -34,12 +34,9 @@ const heroSlides = computed(() =>
   withImages.value.slice(0, 5).map((photo) => ({ src: shot(photo), alt: photo.alt })),
 )
 
-// Deep-zoom tiles are generated per photograph and most have not been through
-// it yet; the slide falls back so the section is never empty.
-const zoomables = computed(() => {
-  const tiled = all.value.filter((photo) => photo.is_zoomable)
-  return tiled.length ? tiled : withImages.value.slice(0, 3)
-})
+// Only photographs whose deep-zoom tiles are ready. With none, the slide is left
+// out rather than filled with ordinary frames under a gigapixel heading.
+const zoomables = computed(() => all.value.filter((photo) => photo.is_zoomable))
 
 const slide = ref(0)
 const current = computed(() => zoomables.value[slide.value] ?? null)
@@ -160,8 +157,11 @@ onBeforeUnmount(() => ctx?.revert())
           class="btn btn--solid slide__cta"
           @click="openLightbox(zoomables, slide)"
         >
-          {{ current.is_zoomable ? $t('home.gigapixelCta') : $t('work.zoom') }}
+          {{ $t('home.gigapixelCta') }}
         </button>
+        <p class="mono slide__photo">
+          {{ current.title }}<template v-if="current.location">&nbsp;&middot;&nbsp;{{ current.location }}</template>
+        </p>
       </div>
 
       <div v-if="zoomables.length > 1" class="slide__nav">
@@ -336,8 +336,7 @@ onBeforeUnmount(() => ctx?.revert())
 
 .slide {
   position: relative;
-  height: 100svh;
-  min-height: 560px;
+  height: clamp(440px, 64vh, 640px);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -389,6 +388,17 @@ onBeforeUnmount(() => ctx?.revert())
 
 .slide__cta {
   margin-top: 30px;
+  padding: 19px 38px;
+  font-size: 14px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+}
+
+.slide__photo {
+  margin-top: 16px;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
 }
 
 .slide__nav {

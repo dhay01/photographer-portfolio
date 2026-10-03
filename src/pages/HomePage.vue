@@ -8,7 +8,7 @@ import PostCard from '../components/PostCard.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getCategories, getHeroSlides, getPage, getPhotos, getPosts, getWorkshops } from '../lib/api'
-import { webSrc } from '../lib/images'
+import { ratioOf, webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
 import { useSite } from '../composables/useSite'
 
@@ -71,19 +71,11 @@ const heroSlides = computed(() =>
   (slides.value ?? []).map((slide) => ({ src: webSrc(slide.images, 'preview'), alt: slide.alt })),
 )
 
-// Deep-zoom tiles are generated per photo, and most frames have not been tiled
-// yet — often none of them. Zoomable ones lead, the rest pad the strip so the
-// section is never a lone tile or an empty gap, and only the genuinely zoomable
-// ones advertise the deep-zoom badge.
-const gigaPhotos = computed(() => {
-  const all = photos.value ?? []
-  return [
-    ...all.filter((photo) => photo.is_zoomable),
-    ...all.filter((photo) => !photo.is_zoomable),
-  ].slice(0, 4)
-})
+// The section shows one photograph, and only one whose deep-zoom tiles are
+// ready; with none, the section is left out. The viewer can still step through
+// every zoomable frame.
+const gigaPhotos = computed(() => (photos.value ?? []).filter((photo) => photo.is_zoomable))
 const gigaHero = computed(() => gigaPhotos.value[0] ?? null)
-const gigaRest = computed(() => gigaPhotos.value.slice(1))
 
 const gigaPos = ref(null)
 const openGiga = (i) => (gigaPos.value = i)
@@ -205,7 +197,7 @@ const onNotify = () => {
     </section>
 
     <!-- GIGAPIXEL -->
-    <section id="gigapixel" class="section section--rule">
+    <section v-if="gigaHero" id="gigapixel" class="section section--rule">
       <div class="shell">
         <div class="section-head">
           <div data-fade>
@@ -215,12 +207,13 @@ const onNotify = () => {
           <p data-fade class="lede giga__note">{{ $t('home.gigapixelBody') }}</p>
         </div>
 
-        <div v-if="gigaHero" class="giga">
+        <div class="giga">
           <button
             type="button"
             data-fade
             data-tile
             class="giga__frame"
+            :style="{ '--r': ratioOf(gigaHero.ratio, 16 / 9) }"
             :aria-label="`Open ${gigaHero.title}`"
             @click="openGiga(0)"
           >
@@ -233,38 +226,14 @@ const onNotify = () => {
               />
             </div>
             <div class="giga__scrim" />
-            <span v-if="gigaHero.is_zoomable" class="giga__badge mono">
-              {{ $t('home.gigapixelCta') }}
-            </span>
-            <span class="giga__caption">
+            <span class="giga__center">
+              <span class="giga__cta mono">{{ $t('home.gigapixelCta') }}</span>
               <span class="giga__title">{{ gigaHero.title }}</span>
               <span class="giga__where mono">
-                {{ gigaHero.location }}
-                <template v-if="gigaHero.is_zoomable">
-                  &nbsp;&middot;&nbsp;{{ $t('home.gigapixelHint') }}
-                </template>
+                <template v-if="gigaHero.location">{{ gigaHero.location }}&nbsp;&middot;&nbsp;</template>{{ $t('home.gigapixelHint') }}
               </span>
             </span>
           </button>
-
-          <div v-if="gigaRest.length" class="giga__strip">
-            <button
-              v-for="(shot, i) in gigaRest"
-              :key="shot.slug"
-              type="button"
-              data-fade
-              class="giga__thumb"
-              :aria-label="`Open ${shot.title}`"
-              @click="openGiga(i + 1)"
-            >
-              <ImageSlot
-                :src="webSrc(shot.images, 'thumb')"
-                :alt="shot.alt"
-                :placeholder="shot.title"
-                fit="cover"
-              />
-            </button>
-          </div>
         </div>
       </div>
     </section>
@@ -1028,17 +997,18 @@ const onNotify = () => {
 }
 
 .giga {
-  display: grid;
-  gap: clamp(10px, 1.2vw, 16px);
+  container-type: inline-size;
 }
 
+/* As tall as the photograph is at full width, within a band: a panorama shows
+   whole, and nothing grows past half the screen. */
 .giga__frame {
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: clamp(200px, calc(100cqw / var(--r)), min(50vh, 480px));
   padding: 0;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 10px;
   overflow: hidden;
   background: var(--panel);
@@ -1061,79 +1031,62 @@ const onNotify = () => {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(11, 12, 14, 0) 45%, rgba(11, 12, 14, 0.8) 100%);
+  background: radial-gradient(
+    ellipse 60% 75% at 50% 50%,
+    rgba(11, 12, 14, 0.55) 0%,
+    rgba(11, 12, 14, 0.22) 60%,
+    rgba(11, 12, 14, 0.08) 100%
+  );
 }
 
-.giga__badge {
+/* Opening the deep zoom is the point of the section, so the way in sits in the
+   middle of the frame with the photograph's name beneath it. */
+.giga__center {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 3;
-  padding: 8px 14px;
-  border-radius: 100px;
-  background: rgba(11, 12, 14, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(246, 139, 43, 0.5);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.giga__caption {
-  position: absolute;
-  left: clamp(16px, 2vw, 28px);
-  bottom: clamp(14px, 1.8vw, 24px);
+  inset: 0;
   z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  text-align: start;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.giga__cta {
+  padding: clamp(14px, 1.4vw, 19px) clamp(24px, 2.6vw, 38px);
+  border-radius: 100px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: clamp(12.5px, 1vw, 14.5px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  transition: background 0.3s ease, transform 0.4s ease;
+}
+
+.giga__frame:hover .giga__cta,
+.giga__frame:focus-visible .giga__cta {
+  background: #ffa14e;
+  transform: translateY(-2px) scale(1.03);
 }
 
 .giga__title {
-  font-size: clamp(20px, 2.2vw, 30px);
-  font-weight: 500;
+  margin-top: 8px;
+  font-size: clamp(20px, 2.4vw, 32px);
+  font-weight: 600;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
 
 .giga__where {
   font-size: 10.5px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0.7;
-}
-
-.giga__strip {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(10px, 1.2vw, 16px);
-}
-
-.giga__thumb {
-  position: relative;
-  aspect-ratio: 3 / 2;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--panel);
-  cursor: pointer;
-  filter: grayscale(0.4);
-  transition: filter 0.5s ease, border-color 0.5s ease;
-}
-
-.giga__thumb:hover,
-.giga__thumb:focus-visible {
-  filter: grayscale(0);
-  border-color: var(--line-strong);
-}
-
-@media (max-width: 640px) {
-  .giga__frame {
-    aspect-ratio: 4 / 3;
-  }
+  opacity: 0.8;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
 }
 
 /* ---------- private workshops ---------- */

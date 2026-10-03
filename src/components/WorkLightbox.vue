@@ -355,19 +355,22 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  padding: 12px 22px;
+  padding: 18px 36px;
   border: 1px solid var(--accent);
   border-radius: 100px;
-  background: rgba(246, 139, 43, 0.1);
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
   cursor: pointer;
-  font-size: 11px;
+  font-size: 14px;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .zoom-cta:hover {
-  background: rgba(246, 139, 43, 0.2);
+  background: #ffa14e;
+  border-color: #ffa14e;
 }
 
 /* ---------- deep zoom ---------- */
