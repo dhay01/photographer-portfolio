@@ -162,9 +162,6 @@ const onNotify = () => {
             <span class="eyebrow">{{ $t('home.workEyebrow') }}</span>
             <h2 class="display">{{ section('work').heading }}</h2>
           </div>
-          <RouterLink to="/work" class="link-mono">
-            {{ $t('home.allGalleries') }} <span class="arrow">&rarr;</span>
-          </RouterLink>
         </div>
 
         <div class="galleries__grid">
