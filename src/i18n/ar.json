@@ -47,6 +47,8 @@
   },
   "work": {
     "all": "",
+    "title": "",
+    "category": "",
     "location": "",
     "gear": "",
     "enterZoom": "",

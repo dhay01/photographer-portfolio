@@ -47,6 +47,8 @@
   },
   "work": {
     "all": "All",
+    "title": "Title",
+    "category": "Category",
     "location": "Location",
     "gear": "Gear",
     "enterZoom": "⤢ Enter deep-zoom",

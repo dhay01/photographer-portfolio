@@ -132,17 +132,23 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="lb__meta">
-          <div>
-            <div class="lb__title">{{ current.title }}</div>
-            <div class="lb__cat mono">{{ current.category?.name }}</div>
-          </div>
-
+          <!-- Four equal columns, so the title sits beside the details rather than
+               over them. A detail with nothing in it is left out, not shown as a
+               label above an empty space. -->
           <div class="lb__facts">
-            <div>
+            <div v-if="current.title">
+              <div class="lb__label mono">{{ $t('work.title') }}</div>
+              <div class="lb__value lb__value--title">{{ current.title }}</div>
+            </div>
+            <div v-if="current.category?.name">
+              <div class="lb__label mono">{{ $t('work.category') }}</div>
+              <div class="lb__value lb__value--category">{{ current.category.name }}</div>
+            </div>
+            <div v-if="current.location">
               <div class="lb__label mono">{{ $t('work.location') }}</div>
               <div class="lb__value">{{ current.location }}</div>
             </div>
-            <div>
+            <div v-if="current.gear">
               <div class="lb__label mono">{{ $t('work.gear') }}</div>
               <div class="lb__value">{{ current.gear }}</div>
             </div>
@@ -318,23 +324,11 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-.lb__title {
-  font-size: clamp(15px, 1.2vw, 17px);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-.lb__cat {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-top: 6px;
-}
-
 .lb__facts {
   display: flex;
-  gap: clamp(18px, 2.5vw, 40px);
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px clamp(22px, 3vw, 44px);
   text-align: left;
 }
 
@@ -349,6 +343,14 @@ onBeforeUnmount(() => {
 .lb__value {
   font-size: 15.5px;
   opacity: 0.95;
+}
+
+.lb__value--title {
+  font-weight: 500;
+}
+
+.lb__value--category {
+  color: var(--accent);
 }
 
 .zoom-cta {
@@ -505,7 +507,8 @@ onBeforeUnmount(() => {
   }
 
   .lb__facts {
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>
