@@ -321,9 +321,13 @@ onBeforeUnmount(() => ctx?.revert())
 
 /* ---------- gigapixel slide ---------- */
 
+/* Inset and rounded like the slider at the top of the page, so the two read as
+   the same kind of frame. */
 .slide {
   position: relative;
   height: clamp(440px, 64vh, 640px);
+  margin: 0 clamp(16px, 2.2vw, 34px);
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   align-items: center;
