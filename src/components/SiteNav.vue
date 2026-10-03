@@ -170,8 +170,11 @@ watch(() => route.fullPath, () => (open.value = false))
 .wordmark__logo {
   /* Sized against the nav rather than against the text it replaced. A signature
      carries a lot of empty space above and below its strokes, so matching the
-     wordmark's height left the mark itself looking half the size. */
-  height: clamp(38px, 4vw, 64px);
+     wordmark's height left the mark itself looking half the size. The negative
+     margins give back exactly what it grew by, so the nav keeps its height and
+     nothing laid out against it moves — the empty space overlaps the padding. */
+  height: clamp(48px, 5.6vw, 92px);
+  margin-block: calc((clamp(38px, 4vw, 64px) - clamp(48px, 5.6vw, 92px)) / 2);
   max-width: 300px;
   width: auto;
   object-fit: contain;
