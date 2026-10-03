@@ -84,6 +84,68 @@ img {
   padding: clamp(60px, 8vw, 120px) var(--gutter);
 }
 
+/* Mosaic: a four-column grid of square cells and wide (two-column) ones, planned
+   by lib/mosaic.js so every row ends flush. Cells stretch to their row. A wide
+   cell takes its height from the squares beside it, so every row is the same
+   height; a pair of wide cells is 2:1, and a lone frame is a band across the
+   page. The image fills its frame without sizing it. On a phone the grid
+   halves: a wide cell becomes a row of its own and squares come in pairs, so
+   rows still close. */
+.mosaic {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+.mosaic__cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mosaic__cell--wide,
+.mosaic__cell--pair {
+  grid-column: span 2;
+}
+
+.mosaic__cell--full {
+  grid-column: 1 / -1;
+}
+
+.mosaic__frame {
+  position: relative;
+  flex: 1 0 auto;
+  aspect-ratio: 1;
+}
+
+.mosaic__frame > * {
+  position: absolute;
+  inset: 0;
+}
+
+.mosaic__cell--wide .mosaic__frame {
+  aspect-ratio: auto;
+}
+
+.mosaic__cell--pair .mosaic__frame {
+  aspect-ratio: 2;
+}
+
+.mosaic__cell--full .mosaic__frame {
+  aspect-ratio: auto;
+  height: clamp(240px, 52vh, 540px);
+}
+
+@media (max-width: 640px) {
+  .mosaic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mosaic__cell--wide .mosaic__frame {
+    aspect-ratio: 2;
+  }
+}
+
 .section--rule {
   border-top: 1px solid var(--line);
 }

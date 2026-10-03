@@ -9,7 +9,8 @@ import ImageSlot from '../components/ImageSlot.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
 import { getCategories, getPhotos } from '../lib/api'
-import { webSrc } from '../lib/images'
+import { ratioOf, webSrc } from '../lib/images'
+import { mosaic } from '../lib/mosaic'
 import { useContent, useContentFor } from '../composables/useContent'
 
 const root = ref(null)
@@ -30,10 +31,7 @@ const { data: photos, pending: photosPending } = useContentFor(slug, getPhotos, 
 // A frame with no file uploaded yet would sit in the grid as an empty panel.
 const shots = computed(() => (photos.value ?? []).filter((photo) => webSrc(photo.images, 'preview')))
 
-const ratioOf = (photo) => {
-  const [w, h] = String(photo.ratio ?? '3/2').split('/').map(Number)
-  return w > 0 && h > 0 ? w / h : 1.5
-}
+const cells = computed(() => mosaic(shots.value, (photo) => ratioOf(photo.ratio)))
 
 const crumbs = computed(() => [
   { label: t('nav.home'), to: '/' },
@@ -85,19 +83,22 @@ const stepLightbox = (delta) => {
             {{ $t('work.empty') }}
           </p>
 
-          <div v-else class="justified">
-            <button
-              v-for="(photo, i) in shots"
-              :key="photo.slug"
-              type="button"
-              data-fade
-              class="shot"
-              :style="{ '--r': ratioOf(photo) }"
-              :aria-label="photo.title"
-              @click="lbPos = i"
+          <div v-else class="mosaic">
+            <div
+              v-for="(cell, i) in cells"
+              :key="cell.item.slug"
+              :class="['mosaic__cell', `mosaic__cell--${cell.size}`]"
             >
-              <ImageSlot :src="webSrc(photo.images, 'preview')" :alt="photo.alt" fit="cover" />
-            </button>
+              <button
+                type="button"
+                data-fade
+                class="shot mosaic__frame"
+                :aria-label="cell.item.title"
+                @click="lbPos = i"
+              >
+                <ImageSlot :src="webSrc(cell.item.images, 'preview')" :alt="cell.item.alt" fit="cover" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -173,33 +174,16 @@ const stepLightbox = (delta) => {
   opacity: 0.5;
 }
 
-/* Justified rows: every frame is shown whole at its own proportions, and each
-   row is grown to the full width. Width grows in step with the ratio, so the
-   frames in a row come out the same height; the spacer after the last frame
-   takes the slack, so a short final row keeps the base height instead of being
-   blown up to fill the width. */
-.justified {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(10px, 1.2vw, 16px);
-}
-
-.justified::after {
-  content: '';
-  flex-grow: 1000000;
-}
-
 .shot {
-  --row: clamp(150px, 24vw, 340px);
   position: relative;
-  flex: calc(var(--r) * 1000) 1 calc(var(--r) * var(--row));
-  aspect-ratio: var(--r);
+  display: block;
+  width: 100%;
   padding: 0;
   border: 0;
   border-radius: 6px;
   overflow: hidden;
   background: var(--panel);
-  cursor: zoom-in;
+  cursor: pointer;
 }
 
 .shot :deep(.slot-img) {

@@ -9,7 +9,8 @@ import HeroCarousel from '../components/HeroCarousel.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { getCategories, getPage, getPhotos } from '../lib/api'
-import { webSrc } from '../lib/images'
+import { ratioOf, webSrc } from '../lib/images'
+import { mosaic } from '../lib/mosaic'
 import { useContent } from '../composables/useContent'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -33,6 +34,8 @@ const withImages = computed(() => all.value.filter(shot))
 const heroSlides = computed(() =>
   withImages.value.slice(0, 5).map((photo) => ({ src: shot(photo), alt: photo.alt })),
 )
+
+const categoryCells = computed(() => mosaic(categories.value ?? [], (c) => ratioOf(c.ratio)))
 
 // Only photographs whose deep-zoom tiles are ready. With none, the slide is left
 // out rather than filled with ordinary frames under a gigapixel heading.
@@ -123,15 +126,15 @@ onBeforeUnmount(() => ctx?.revert())
         <h2 class="collections__title">{{ $t('work.galleriesHeading') }}</h2>
         <p class="collections__body">{{ page?.intro ?? $t('work.galleriesBody') }}</p>
 
-        <div class="cats">
+        <div class="cats mosaic">
           <RouterLink
-            v-for="c in categories"
+            v-for="{ item: c, size } in categoryCells"
             :key="c.slug"
             data-cat
             :to="`/work/${c.slug}`"
-            class="cat"
+            :class="['cat', 'mosaic__cell', `mosaic__cell--${size}`]"
           >
-            <span class="cat__img">
+            <span class="cat__img mosaic__frame">
               <ImageSlot :src="webSrc(c.images, 'preview')" :alt="c.name" :placeholder="c.name" fit="cover" />
             </span>
             <span class="cat__name">{{ c.name }}</span>
@@ -280,9 +283,7 @@ onBeforeUnmount(() => ctx?.revert())
 }
 
 .cats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(18px, 2.4vw, 34px) clamp(16px, 2vw, 28px);
+  row-gap: clamp(22px, 2.6vw, 36px);
   margin-top: clamp(40px, 5vw, 72px);
   text-align: start;
 }
@@ -290,14 +291,12 @@ onBeforeUnmount(() => ctx?.revert())
 /* No scrim, no counter, no number badge: the photograph is the whole card and
    the name sits under it, out of the way. */
 .cat {
-  display: block;
   color: inherit;
 }
 
 .cat__img {
   position: relative;
   display: block;
-  aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: 4px;
   background: var(--panel);
@@ -318,18 +317,6 @@ onBeforeUnmount(() => ctx?.revert())
   font-size: clamp(15px, 1.4vw, 18px);
   font-weight: 400;
   letter-spacing: -0.01em;
-}
-
-@media (max-width: 900px) {
-  .cats {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .cats {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ---------- gigapixel slide ---------- */
