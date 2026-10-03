@@ -319,7 +319,7 @@ onBeforeUnmount(() => {
 }
 
 .lb__title {
-  font-size: clamp(18px, 1.8vw, 24px);
+  font-size: clamp(15px, 1.2vw, 17px);
   font-weight: 500;
   letter-spacing: -0.01em;
 }
@@ -339,7 +339,7 @@ onBeforeUnmount(() => {
 }
 
 .lb__label {
-  font-size: 9.5px;
+  font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -347,8 +347,8 @@ onBeforeUnmount(() => {
 }
 
 .lb__value {
-  font-size: 14px;
-  opacity: 0.9;
+  font-size: 15.5px;
+  opacity: 0.95;
 }
 
 .zoom-cta {
