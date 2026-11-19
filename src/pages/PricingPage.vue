@@ -43,6 +43,7 @@ const footerLinks = computed(() => {
 // ---------- state: lives in this tab only, never saved or sent ----------
 
 const MAX_YEARS = 30
+const MIN_SESSIONS = 1
 const MAX_SESSIONS = 300
 const MAX_PROFIT = 50
 
@@ -64,8 +65,8 @@ const removeRow = (list, id) => {
   if (index >= 0) list.splice(index, 1)
 }
 
-const clamp = (value, max) => Math.min(max, Math.max(0, Math.round(value || 0)))
-const nudge = (target, key, delta, max) => (target[key] = clamp(target[key] + delta, max))
+const clamp = (value, max, min = 0) => Math.min(max, Math.max(min, Math.round(value || 0)))
+const nudge = (target, key, delta, max, min) => (target[key] = clamp(target[key] + delta, max, min))
 
 const profitPercent = computed({
   get: () => Math.round(state.profitRate * 100),
@@ -308,9 +309,9 @@ onBeforeUnmount(() => tween?.kill())
                   <div class="input">
                     <span class="input__label">{{ tt('pricing.session.sessions') }}</span>
                     <div class="count count--lg" role="group" :aria-label="tt('pricing.session.sessions')">
-                      <button type="button" :aria-label="tt('pricing.less')" @click="nudge(state, 'sessions', -1, MAX_SESSIONS)">−</button>
+                      <button type="button" :aria-label="tt('pricing.less')" @click="nudge(state, 'sessions', -1, MAX_SESSIONS, MIN_SESSIONS)">−</button>
                       <output dir="ltr">{{ state.sessions }}</output>
-                      <button type="button" :aria-label="tt('pricing.more')" @click="nudge(state, 'sessions', 1, MAX_SESSIONS)">+</button>
+                      <button type="button" :aria-label="tt('pricing.more')" @click="nudge(state, 'sessions', 1, MAX_SESSIONS, MIN_SESSIONS)">+</button>
                     </div>
                     <span class="input__hint">{{ tt('pricing.session.sessionsHint') }}</span>
                   </div>
@@ -331,22 +332,19 @@ onBeforeUnmount(() => tween?.kill())
                 <span class="bracket bracket--sm bracket--br" />
                 <span class="eyebrow" lang="en" dir="ltr">Your floor</span>
                 <span class="floor__label">{{ tt('pricing.result.title') }}</span>
-                <template v-if="state.sessions > 0">
-                  <span class="floor__value" dir="ltr">{{ money(floorShown) }}</span>
-                  <span class="floor__currency">{{ tt('pricing.currency') }}</span>
-                  <span class="floor__formula">
-                    {{
-                      tt('pricing.result.formula', {
-                        target: money(result.target),
-                        sessions: state.sessions,
-                        exact: money(result.exact),
-                        step: money(ROUND_TO),
-                      })
-                    }}
-                  </span>
-                  <span class="floor__warn">{{ tt('pricing.result.below') }}</span>
-                </template>
-                <span v-else class="floor__formula">{{ tt('pricing.result.noSessions') }}</span>
+                <span class="floor__value" dir="ltr">{{ money(floorShown) }}</span>
+                <span class="floor__currency">{{ tt('pricing.currency') }}</span>
+                <span class="floor__formula">
+                  {{
+                    tt('pricing.result.formula', {
+                      target: money(result.target),
+                      sessions: state.sessions,
+                      exact: money(result.exact),
+                      step: money(ROUND_TO),
+                    })
+                  }}
+                </span>
+                <span class="floor__warn">{{ tt('pricing.result.below') }}</span>
               </div>
             </div>
           </div>

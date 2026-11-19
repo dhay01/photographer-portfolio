@@ -215,7 +215,6 @@
       "title": "Your lowest session price",
       "formula": "{target} ÷ {sessions} = {exact}, rounded up to the nearest {step}",
       "below": "Anything less is a loss",
-      "noSessions": "Enter your sessions a month to see the price",
       "rule": "The rule: a price is a calculation, not a guess."
     }
   }
