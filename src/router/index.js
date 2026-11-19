@@ -19,6 +19,7 @@ const routes = [
   },
   { path: '/blog', name: 'blog', component: () => import('../pages/BlogPage.vue') },
   { path: '/blog/:slug', name: 'post', component: () => import('../pages/BlogPostPage.vue') },
+  { path: '/pricing', name: 'pricing', component: () => import('../pages/PricingPage.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
