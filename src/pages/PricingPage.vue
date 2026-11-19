@@ -42,6 +42,7 @@ const footerLinks = computed(() => {
 
 // ---------- state: lives in this tab only, never saved or sent ----------
 
+const MIN_YEARS = 1
 const MAX_YEARS = 30
 const MIN_SESSIONS = 1
 const MAX_SESSIONS = 300
@@ -49,7 +50,7 @@ const MAX_PROFIT = 50
 
 let lastId = 0
 const withId = (row) => ({ id: ++lastId, ...row })
-const blankGear = () => withId({ name: '', price: 0, years: 0 })
+const blankGear = () => withId({ name: '', price: 0, years: MIN_YEARS })
 const blankEntry = () => withId({ name: '', amount: 0, type: ENTRY_EXPENSE })
 
 const state = reactive({
@@ -135,9 +136,6 @@ onBeforeUnmount(() => tween?.kill())
         </span>
         <div class="calc__head-row">
           <h1 data-reveal class="calc__title">{{ tt('pricing.title') }}</h1>
-          <div data-reveal class="calc__intro">
-            <p class="lede">{{ tt('pricing.intro') }}</p>
-          </div>
         </div>
       </header>
 
@@ -163,7 +161,6 @@ onBeforeUnmount(() => tween?.kill())
             <div class="panel__head">
               <span class="eyebrow" lang="en" dir="ltr">{{ tt(`pricing.steps.${STEPS[step]}.eyebrow`) }}</span>
               <h2 class="panel__title">{{ tt(`pricing.steps.${STEPS[step]}.title`) }}</h2>
-              <p class="panel__hint">{{ tt(`pricing.steps.${STEPS[step]}.hint`) }}</p>
             </div>
 
             <!-- 01 GEAR -->
@@ -184,11 +181,11 @@ onBeforeUnmount(() => tween?.kill())
                       :placeholder="tt('pricing.gear.namePlaceholder')"
                       :aria-label="tt('pricing.gear.item')"
                     />
-                    <AmountField v-model="item.price" :label="tt('pricing.gear.price')" />
+                    <AmountField v-model="item.price" :label="tt('pricing.gear.price')" :placeholder="tt('pricing.gear.price')" />
                     <div class="count" role="group" :aria-label="tt('pricing.gear.years')">
-                      <button type="button" :aria-label="tt('pricing.less')" @click="nudge(item, 'years', -1, MAX_YEARS)">−</button>
+                      <button type="button" :aria-label="tt('pricing.less')" @click="nudge(item, 'years', -1, MAX_YEARS, MIN_YEARS)">−</button>
                       <output dir="ltr">{{ item.years }}</output>
-                      <button type="button" :aria-label="tt('pricing.more')" @click="nudge(item, 'years', 1, MAX_YEARS)">+</button>
+                      <button type="button" :aria-label="tt('pricing.more')" @click="nudge(item, 'years', 1, MAX_YEARS, MIN_YEARS)">+</button>
                     </div>
                     <span class="rows__out" dir="ltr" :data-unit="tt('pricing.gear.perMonth')">{{ money(gearMonthly(item)) }}</span>
                     <button type="button" class="rows__remove" :aria-label="tt('pricing.remove')" @click="removeRow(state.gear, item.id)">×</button>
@@ -228,7 +225,7 @@ onBeforeUnmount(() => tween?.kill())
                       :placeholder="tt('pricing.monthly.namePlaceholder')"
                       :aria-label="tt('pricing.monthly.item')"
                     />
-                    <AmountField v-model="entry.amount" :label="tt('pricing.monthly.amount')" />
+                    <AmountField v-model="entry.amount" :label="tt('pricing.monthly.amount')" :placeholder="tt('pricing.monthly.amount')" />
                     <div class="toggle" role="radiogroup" :aria-label="tt('pricing.monthly.type')">
                       <button
                         v-for="type in [ENTRY_EXPENSE, ENTRY_INCOME]"
@@ -286,7 +283,6 @@ onBeforeUnmount(() => tween?.kill())
                   <div class="input">
                     <span class="input__label">{{ tt('pricing.session.salary') }}</span>
                     <AmountField v-model="state.salary" :label="tt('pricing.session.salary')" />
-                    <span class="input__hint">{{ tt('pricing.session.salaryHint') }}</span>
                   </div>
 
                   <div class="input">
@@ -303,7 +299,6 @@ onBeforeUnmount(() => tween?.kill())
                       step="1"
                       :aria-label="tt('pricing.session.profit')"
                     />
-                    <span class="input__hint">{{ tt('pricing.session.profitHint') }}</span>
                   </div>
 
                   <div class="input">
@@ -313,7 +308,6 @@ onBeforeUnmount(() => tween?.kill())
                       <output dir="ltr">{{ state.sessions }}</output>
                       <button type="button" :aria-label="tt('pricing.more')" @click="nudge(state, 'sessions', 1, MAX_SESSIONS, MIN_SESSIONS)">+</button>
                     </div>
-                    <span class="input__hint">{{ tt('pricing.session.sessionsHint') }}</span>
                   </div>
                 </div>
 
@@ -420,10 +414,6 @@ onBeforeUnmount(() => tween?.kill())
   line-height: 1.15;
 }
 
-.calc__intro {
-  max-width: 400px;
-}
-
 .panel__nav .btn {
   letter-spacing: 0;
   font-size: 13px;
@@ -517,13 +507,6 @@ onBeforeUnmount(() => tween?.kill())
   font-weight: 700;
   font-size: clamp(24px, 3vw, 40px);
   line-height: 1.25;
-}
-
-.panel__hint {
-  margin-top: 8px;
-  font-size: 15px;
-  font-weight: 300;
-  opacity: 0.6;
 }
 
 .panel__nav {
@@ -875,12 +858,6 @@ onBeforeUnmount(() => tween?.kill())
 .input__value {
   color: var(--accent);
   font-variant-numeric: tabular-nums;
-}
-
-.input__hint {
-  font-size: 13px;
-  font-weight: 300;
-  opacity: 0.5;
 }
 
 .math {

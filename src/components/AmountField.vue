@@ -12,6 +12,7 @@ const model = defineModel({ type: Number, default: 0 })
 defineProps({
   label: { type: String, required: true },
   suffix: { type: String, default: '' },
+  placeholder: { type: String, default: '0' },
 })
 
 const draft = ref('')
@@ -39,7 +40,7 @@ const onInput = (event) => {
       inputmode="decimal"
       dir="ltr"
       autocomplete="off"
-      placeholder="0"
+      :placeholder="placeholder"
       :value="shown"
       @focus="onFocus"
       @blur="focused = false"

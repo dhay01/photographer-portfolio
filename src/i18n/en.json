@@ -145,7 +145,6 @@
     "crumb": "Pricing calculator",
     "eyebrow": "Free tool · Session pricing",
     "title": "What should a session cost?",
-    "intro": "Three steps: your gear, your monthly costs, your salary. Type in your numbers and the price builds as you go. Nothing is saved or sent; it all stays on your device.",
     "next": "Next",
     "back": "Back",
     "total": "Total",
@@ -157,20 +156,17 @@
       "gear": {
         "short": "Gear",
         "eyebrow": "01 Gear",
-        "title": "Gear: what does it cost you a month?",
-        "hint": "Depreciation = purchase price ÷ the years it lasts you"
+        "title": "Gear: what does it cost you a month?"
       },
       "monthly": {
         "short": "Monthly",
         "eyebrow": "02 Monthly",
-        "title": "Monthly costs: what does working cost you?",
-        "hint": "“Expense” adds; fixed “income” (like renting out gear) is taken off"
+        "title": "Monthly costs: what does working cost you?"
       },
       "session": {
         "short": "Session price",
         "eyebrow": "03 The math",
-        "title": "What should a session cost?",
-        "hint": "Work cost + your salary + a profit for the business, divided by your sessions"
+        "title": "What should a session cost?"
       }
     },
     "gear": {
@@ -194,11 +190,8 @@
     },
     "session": {
       "salary": "Your monthly salary",
-      "salaryHint": "What do you need to live on? You work for your business.",
       "profit": "Business profit",
-      "profitHint": "For growth and slow months (15–25%)",
-      "sessions": "Sessions a month",
-      "sessionsHint": "Be honest: the average, not your best month"
+      "sessions": "Sessions a month"
     },
     "receipt": {
       "gear": "Gear share",
