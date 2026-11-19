@@ -11,7 +11,7 @@ const slides = [{ images: { preview: 'https://img/slide.webp' } }]
 const post = {
   title: 'AI for Photographers',
   excerpt: 'One day at The Station.',
-  images: { preview: 'https://img/post.webp', original: 'https://img/post.jpg' },
+  images: { preview: 'https://img/post.webp', share: 'https://img/post-share.jpg', original: 'https://img/post.jpg' },
 }
 
 /** A fake API: answers the paths it knows, null for anything else. */
@@ -46,11 +46,11 @@ test('a post uses its own title, excerpt and image', async () => {
 
   assert.equal(preview.title, 'AI for Photographers · Ghaith Salih')
   assert.equal(preview.description, 'One day at The Station.')
-  assert.equal(preview.image, 'https://img/post.jpg')
+  assert.equal(preview.image, 'https://img/post-share.jpg')
   assert.equal(preview.type, 'article')
 })
 
-test('falls back to the preview rendition when there is no original', async () => {
+test('falls back to the preview rendition when there is no share size', async () => {
   const preview = await previewFor('/', api(known))
   assert.equal(preview.image, 'https://img/slide.webp')
 })

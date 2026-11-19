@@ -45,8 +45,12 @@ export const summarise = (text, max = DESCRIPTION_MAX) => {
   return `${cut.slice(0, cut.lastIndexOf(' ') > 0 ? cut.lastIndexOf(' ') : cut.length)}…`
 }
 
-/** The original JPG reads everywhere; the WebP renditions stand in when it's missing. */
-const imageOf = (images) => images?.original ?? images?.full ?? images?.preview ?? null
+/**
+ * `share` is a small JPG the API makes for link previews: originals run to
+ * megabytes, which WhatsApp drops. Without one, the small WebP stands in — never
+ * the original, which for a gigapixel upload is hundreds of megabytes.
+ */
+const imageOf = (images) => images?.share ?? images?.preview ?? images?.full ?? null
 
 const SLUG = /^[a-z0-9-]+$/i
 
