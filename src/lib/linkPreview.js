@@ -45,8 +45,8 @@ export const summarise = (text, max = DESCRIPTION_MAX) => {
   return `${cut.slice(0, cut.lastIndexOf(' ') > 0 ? cut.lastIndexOf(' ') : cut.length)}…`
 }
 
-/** The smaller "preview" rendition keeps under WhatsApp's image size limit. */
-const imageOf = (images) => images?.preview ?? images?.full ?? null
+/** The original JPG reads everywhere; the WebP renditions stand in when it's missing. */
+const imageOf = (images) => images?.original ?? images?.full ?? images?.preview ?? null
 
 const SLUG = /^[a-z0-9-]+$/i
 
