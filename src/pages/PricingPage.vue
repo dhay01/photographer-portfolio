@@ -51,13 +51,11 @@ const withId = (row) => ({ id: ++lastId, ...row })
 const blankGear = () => withId({ name: '', price: 0, years: 0 })
 const blankEntry = () => withId({ name: '', amount: 0, type: ENTRY_EXPENSE })
 
-const DEFAULT_PROFIT_RATE = 0.2
-
 const state = reactive({
   gear: [blankGear()],
   entries: [blankEntry()],
   salary: 0,
-  profitRate: DEFAULT_PROFIT_RATE,
+  profitRate: 0,
   sessions: 0,
 })
 
