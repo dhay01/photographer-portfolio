@@ -5,6 +5,8 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
+import { i18n } from '../i18n'
 import { getPage, getWorkshops } from '../lib/api'
 import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
@@ -12,6 +14,7 @@ import { dateParts, monthName, price, shortDate, workshopDates } from '../lib/fo
 
 const root = ref(null)
 useSiteMotion(root)
+usePageTitle(() => i18n.global.t('nav.courses'))
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 

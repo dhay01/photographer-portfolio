@@ -7,6 +7,8 @@ import MiniFooter from '../components/MiniFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
+import { i18n } from '../i18n'
 import { getPost, getPosts } from '../lib/api'
 import { webSrc } from '../lib/images'
 import { useContent, useContentFor } from '../composables/useContent'
@@ -23,6 +25,7 @@ const author = computed(() => site.value?.author ?? null)
 // Re-fetches when the route slug changes, so /blog/a -> /blog/b loads the new post.
 const slug = computed(() => route.params.slug)
 const { data: post, pending, error } = useContentFor(slug, getPost)
+usePageTitle(() => post.value?.title ?? i18n.global.t('nav.blog'))
 
 const { data: allPosts } = useContent(getPosts, { initial: [] })
 const related = computed(() =>

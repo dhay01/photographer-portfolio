@@ -7,6 +7,7 @@ import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 import { getCategories, getHeroSlides, getPage, getPhotos, getPosts, getWorkshops } from '../lib/api'
 import { ratioOf, webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
@@ -14,6 +15,7 @@ import { useSite } from '../composables/useSite'
 
 const root = ref(null)
 useSiteMotion(root)
+usePageTitle()
 
 const { site } = useSite()
 const { data: page } = useContent(getPage.bind(null, 'home'))
