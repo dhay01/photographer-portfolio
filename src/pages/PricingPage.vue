@@ -12,7 +12,6 @@ import {
   ENTRY_EXPENSE,
   ENTRY_INCOME,
   ROUND_TO,
-  SAMPLE,
   gearMonthly,
   gearTotals,
   money,
@@ -52,25 +51,15 @@ const withId = (row) => ({ id: ++lastId, ...row })
 const blankGear = () => withId({ name: '', price: 0, years: 0 })
 const blankEntry = () => withId({ name: '', amount: 0, type: ENTRY_EXPENSE })
 
-const fromSample = () => ({
-  gear: SAMPLE.gear.map(withId),
-  entries: SAMPLE.entries.map(withId),
-  salary: SAMPLE.salary,
-  profitRate: SAMPLE.profitRate,
-  sessions: SAMPLE.sessions,
+const DEFAULT_PROFIT_RATE = 0.2
+
+const state = reactive({
+  gear: [blankGear()],
+  entries: [blankEntry()],
+  salary: 0,
+  profitRate: DEFAULT_PROFIT_RATE,
+  sessions: 0,
 })
-
-const state = reactive(fromSample())
-
-const loadSample = () => Object.assign(state, fromSample())
-const clearAll = () =>
-  Object.assign(state, {
-    gear: [blankGear()],
-    entries: [blankEntry()],
-    salary: 0,
-    profitRate: SAMPLE.profitRate,
-    sessions: 0,
-  })
 
 const removeRow = (list, id) => {
   const index = list.findIndex((row) => row.id === id)
@@ -149,14 +138,6 @@ onBeforeUnmount(() => tween?.kill())
           <h1 data-reveal class="calc__title">{{ tt('pricing.title') }}</h1>
           <div data-reveal class="calc__intro">
             <p class="lede">{{ tt('pricing.intro') }}</p>
-            <div class="calc__tools">
-              <button type="button" class="btn btn--sm" @click="loadSample">
-                {{ tt('pricing.loadSample') }}
-              </button>
-              <button type="button" class="btn btn--sm" @click="clearAll">
-                {{ tt('pricing.clear') }}
-              </button>
-            </div>
           </div>
         </div>
       </header>
@@ -447,14 +428,6 @@ onBeforeUnmount(() => tween?.kill())
   max-width: 400px;
 }
 
-.calc__tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.calc__tools .btn,
 .panel__nav .btn {
   letter-spacing: 0;
   font-size: 13px;
