@@ -20,6 +20,7 @@ const links = [
   { key: 'work', to: '/work' },
   { key: 'courses', to: '/courses' },
   { key: 'blog', to: '/blog' },
+  { key: 'pricing', to: '/pricing' },
   { key: 'contact', to: '/#contact' },
 ]
 

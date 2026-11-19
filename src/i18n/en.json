@@ -10,7 +10,8 @@
     "close": "Close",
     "language": "Language",
     "languageSoon": "Arabic is coming soon",
-    "breadcrumb": "Breadcrumb"
+    "breadcrumb": "Breadcrumb",
+    "pricing": "Pricing"
   },
   "common": {
     "loading": "Loading…",
@@ -138,5 +139,86 @@
     "philosophy": "(02) — Philosophy",
     "approach": "(03) — Approach to the craft",
     "gear": "(04) — Gear & studio"
+  },
+  "pricing": {
+    "home": "Home",
+    "crumb": "Pricing calculator",
+    "eyebrow": "Free tool · Session pricing",
+    "title": "What should a session cost?",
+    "intro": "Three steps: your gear, your monthly costs, your salary. The numbers filled in are the “Ahmed” example from the workshop — swap in your own. Nothing is saved or sent; it all stays on your device.",
+    "loadSample": "Restore Ahmed’s example",
+    "clear": "Start from zero",
+    "next": "Next",
+    "back": "Back",
+    "total": "Total",
+    "remove": "Remove",
+    "less": "Less",
+    "more": "More",
+    "currency": "Iraqi dinar",
+    "steps": {
+      "gear": {
+        "short": "Gear",
+        "eyebrow": "01 Gear",
+        "title": "Gear: what does it cost you a month?",
+        "hint": "Depreciation = purchase price ÷ the years it lasts you"
+      },
+      "monthly": {
+        "short": "Monthly",
+        "eyebrow": "02 Monthly",
+        "title": "Monthly costs: what does working cost you?",
+        "hint": "“Expense” adds; fixed “income” (like renting out gear) is taken off"
+      },
+      "session": {
+        "short": "Session price",
+        "eyebrow": "03 The math",
+        "title": "What should a session cost?",
+        "hint": "Work cost + your salary + a profit for the business, divided by your sessions"
+      }
+    },
+    "gear": {
+      "item": "Item",
+      "price": "Purchase price",
+      "years": "Lasts (years)",
+      "monthly": "Per month",
+      "perMonth": "per month",
+      "namePlaceholder": "Item name",
+      "add": "+ Add an item",
+      "saveEach": "Put this aside every month for your gear"
+    },
+    "monthly": {
+      "item": "Line",
+      "amount": "Per month",
+      "type": "Type",
+      "expense": "Expense",
+      "income": "Income",
+      "namePlaceholder": "Line name",
+      "add": "+ Add a line"
+    },
+    "session": {
+      "salary": "Your monthly salary",
+      "salaryHint": "What do you need to live on? You work for your business.",
+      "profit": "Business profit",
+      "profitHint": "For growth and slow months (15–25%)",
+      "sessions": "Sessions a month",
+      "sessionsHint": "Be honest: the average, not your best month"
+    },
+    "receipt": {
+      "gear": "Gear share",
+      "monthly": "Expenses",
+      "incomeNote": "After taking off {income} of fixed income",
+      "workCost": "Monthly work cost",
+      "workCostNote": "You pay this even when you don’t shoot",
+      "salary": "+ Your salary",
+      "profit": "+ Business profit {rate}%",
+      "target": "Monthly target",
+      "sessions": "÷ Sessions a month"
+    },
+    "result": {
+      "title": "Your lowest session price",
+      "formula": "{target} ÷ {sessions} = {exact}, rounded up to the nearest {step}",
+      "below": "Anything less is a loss",
+      "noSessions": "Enter your sessions a month to see the price",
+      "rule": "The rule: a price is a calculation, not a guess."
+    }
   }
 }
