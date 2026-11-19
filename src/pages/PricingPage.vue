@@ -56,7 +56,7 @@ const state = reactive({
   entries: [blankEntry()],
   salary: 0,
   profitRate: 0,
-  sessions: 0,
+  sessions: 1,
 })
 
 const removeRow = (list, id) => {
