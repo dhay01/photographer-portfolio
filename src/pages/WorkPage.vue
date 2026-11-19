@@ -12,10 +12,13 @@ import { getCategories, getPage, getPhotos } from '../lib/api'
 import { ratioOf, webSrc } from '../lib/images'
 import { mosaic } from '../lib/mosaic'
 import { useContent } from '../composables/useContent'
+import { usePageTitle } from '../composables/usePageTitle'
+import { i18n } from '../i18n'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const root = ref(null)
+usePageTitle(() => i18n.global.t('nav.work'))
 
 const { data: page } = useContent(getPage.bind(null, 'work'))
 const { data: categories } = useContent(() => getCategories('work'), { initial: [] })

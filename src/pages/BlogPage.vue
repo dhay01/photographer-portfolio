@@ -6,6 +6,8 @@ import MiniFooter from '../components/MiniFooter.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import PostCard from '../components/PostCard.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
+import { i18n } from '../i18n'
 import { getPage, getPosts } from '../lib/api'
 import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
@@ -14,6 +16,7 @@ import { monthYear } from '../lib/format'
 
 const root = ref(null)
 useSiteMotion(root)
+usePageTitle(() => i18n.global.t('nav.blog'))
 
 const { site } = useSite()
 const { data: page } = useContent(getPage.bind(null, 'blog'))

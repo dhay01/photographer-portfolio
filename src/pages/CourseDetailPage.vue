@@ -6,6 +6,8 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import ReserveModal from '../components/ReserveModal.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
+import { i18n } from '../i18n'
 import { getWorkshop } from '../lib/api'
 import { webSrc } from '../lib/images'
 import { useContentFor } from '../composables/useContent'
@@ -22,6 +24,7 @@ const instructor = computed(() => site.value?.author ?? null)
 // Re-fetches when the slug changes, so moving between courses loads the new one.
 const slug = computed(() => route.params.slug)
 const { data: course, pending, error } = useContentFor(slug, getWorkshop)
+usePageTitle(() => course.value?.title ?? i18n.global.t('nav.courses'))
 
 const openFaq = ref(null)
 const toggleFaq = (i) => (openFaq.value = openFaq.value === i ? null : i)

@@ -8,6 +8,8 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import ImageSlot from '../components/ImageSlot.vue'
 import WorkLightbox from '../components/WorkLightbox.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
+import { i18n } from '../i18n'
 import { getCategories, getPhotos } from '../lib/api'
 import { ratioOf, webSrc } from '../lib/images'
 import { mosaic } from '../lib/mosaic'
@@ -25,6 +27,7 @@ const { data: categories, pending, error, reload } = useContent(
   { initial: [] },
 )
 const category = computed(() => (categories.value ?? []).find((c) => c.slug === slug.value) ?? null)
+usePageTitle(() => category.value?.name ?? i18n.global.t('nav.work'))
 
 const { data: photos, pending: photosPending } = useContentFor(slug, getPhotos, { initial: [] })
 

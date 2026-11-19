@@ -7,12 +7,15 @@ import ImageSlot from '../components/ImageSlot.vue'
 import PolaroidScatter from '../components/PolaroidScatter.vue'
 import { useSite } from '../composables/useSite'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
+import { i18n } from '../i18n'
 import { getAbout, getPage, getPhotos } from '../lib/api'
 import { webSrc } from '../lib/images'
 import { useContent } from '../composables/useContent'
 
 const root = ref(null)
 useSiteMotion(root)
+usePageTitle(() => i18n.global.t('nav.about'))
 
 const { site } = useSite()
 

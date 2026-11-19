@@ -7,6 +7,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import MiniFooter from '../components/MiniFooter.vue'
 import AmountField from '../components/AmountField.vue'
 import { useSiteMotion } from '../composables/useSiteMotion'
+import { usePageTitle } from '../composables/usePageTitle'
 import { useSite } from '../composables/useSite'
 import {
   ENTRY_EXPENSE,
@@ -26,6 +27,7 @@ import {
 const PAGE_LOCALE = 'ar'
 const { t } = useI18n()
 const tt = (key, named = {}) => t(key, named, { locale: PAGE_LOCALE })
+usePageTitle(() => tt('pricing.crumb'))
 
 const root = ref(null)
 useSiteMotion(root)
